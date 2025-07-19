@@ -1,0 +1,2451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Zealand: A Wine Master's Challenge</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom scrollbar for a better dark-mode aesthetic */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1f2937; /* bg-gray-800 */
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #4f46e5; /* bg-indigo-600 */
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #4338ca; /* bg-indigo-700 */
+        }
+        /* Style for the flippable flashcard */
+        .flashcard-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+        .flashcard.flipped .flashcard-inner {
+            transform: rotateY(180deg);
+        }
+        .flashcard-front, .flashcard-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+        }
+        .flashcard-back {
+            transform: rotateY(180deg);
+        }
+        /* For the timeline highlighting */
+        .correct-item {
+            background-color: rgba(16, 185, 129, 0.2); /* Green with opacity */
+            border-left: 4px solid #10B981;
+        }
+        .incorrect-item {
+            background-color: rgba(239, 68, 68, 0.2); /* Red with opacity */
+            border-left: 4px solid #EF4444;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white font-sans antialiased">
+
+    <!-- Main Game Container -->
+    <div id="game-container" class="min-h-screen flex flex-col items-center justify-center p-4">
+
+        <!-- Main Menu Screen -->
+        <div id="main-menu" class="w-full max-w-4xl text-center">
+            <h1 class="text-4xl md:text-5xl font-bold mb-2 text-purple-400">New Zealand</h1>
+            <h2 class="text-2xl md:text-3xl font-light mb-8">A Wine Master's Challenge</h2>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                <!-- Module Buttons -->
+                <button data-module="historian" class="module-btn bg-gray-800 hover:bg-purple-700 p-6 rounded-lg shadow-lg transition-all duration-300">
+                    <h3 class="text-xl font-semibold">📜 The Historian's Scroll</h3>
+                    <p class="text-gray-400 mt-2">Order key events in NZ wine history.</p>
+                </button>
+                <button data-module="terroir" class="module-btn bg-gray-800 hover:bg-purple-700 p-6 rounded-lg shadow-lg transition-all duration-300">
+                    <h3 class="text-xl font-semibold">🏔️ The Terroir Architect</h3>
+                    <p class="text-gray-400 mt-2">Test your knowledge of GIs, climate, and soils.</p>
+                </button>
+                <button data-module="grapes" class="module-btn bg-gray-800 hover:bg-purple-700 p-6 rounded-lg shadow-lg transition-all duration-300">
+                    <h3 class="text-xl font-semibold">🍇 The Ampelographer's Challenge</h3>
+                    <p class="text-gray-400 mt-2">Identify key varieties, clones, and viticulture.</p>
+                </button>
+                <button data-module="law" class="module-btn bg-gray-800 hover:bg-purple-700 p-6 rounded-lg shadow-lg transition-all duration-300">
+                    <h3 class="text-xl font-semibold">⚖️ The Lawmaker's Desk</h3>
+                    <p class="text-gray-400 mt-2">Navigate NZ's appellation and winemaking laws.</p>
+                </button>
+                <button data-module="gastronomy" class="module-btn bg-gray-800 hover:bg-purple-700 p-6 rounded-lg shadow-lg transition-all duration-300">
+                    <h3 class="text-xl font-semibold">🍽️ The Gastronome's Table</h3>
+                    <p class="text-gray-400 mt-2">Explore classic pairings and local cuisine.</p>
+                </button>
+                <button data-module="critic" class="module-btn bg-gray-800 hover:bg-purple-700 p-6 rounded-lg shadow-lg transition-all duration-300">
+                    <h3 class="text-xl font-semibold">⭐ The Critic's Corner</h3>
+                    <p class="text-gray-400 mt-2">Identify iconic producers, wines, and vintages.</p>
+                </button>
+            </div>
+            
+            <div class="mt-8 flex flex-col items-center">
+                 <button data-module="flashcards" class="module-btn bg-gray-800 hover:bg-purple-700 p-6 rounded-lg shadow-lg transition-all duration-300 w-full max-w-sm">
+                    <h3 class="text-xl font-semibold">📚 Flashcard Study</h3>
+                    <p class="text-gray-400 mt-2">Deepen your knowledge with comprehensive study decks.</p>
+                </button>
+            </div>
+
+            <button id="ai-settings-btn" class="mt-12 text-gray-400 hover:text-white transition-colors">⚙️ AI Settings</button>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quiz-screen" class="hidden w-full max-w-3xl">
+            <div id="quiz-header" class="flex justify-between items-center mb-4">
+                <h2 id="quiz-title" class="text-2xl font-bold text-purple-400">Quiz Title</h2>
+                <div id="quiz-progress" class="text-lg">1 / 10</div>
+            </div>
+            <div id="question-container" class="bg-gray-800 p-6 rounded-lg shadow-lg">
+                <p id="question-text" class="text-xl mb-6">This is the question text?</p>
+                <div id="options-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Options will be dynamically inserted here -->
+                </div>
+            </div>
+            <div id="feedback-container" class="mt-4 p-4 rounded-lg bg-gray-800 hidden">
+                <p id="explanation-text" class="text-md"></p>
+                <div id="ai-button-container" class="mt-4"></div>
+            </div>
+            <div class="flex justify-between items-center mt-6">
+                 <button class="back-to-menu-btn bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-4 rounded-lg transition-colors">Main Menu</button>
+                 <button id="next-question-btn" class="hidden w-1/2 bg-purple-700 hover:bg-purple-800 text-white font-bold py-3 px-4 rounded-lg transition-colors">Next Question</button>
+            </div>
+        </div>
+
+        <!-- Historian Screen -->
+        <div id="historian-screen" class="hidden w-full max-w-4xl">
+             <h2 id="historian-main-title" class="text-2xl font-bold text-purple-400 text-center mb-1">The Historian's Scroll</h2>
+             <p id="historian-challenge-title" class="text-center text-gray-300 mb-4 font-semibold"></p>
+             <div id="historian-game-view">
+                 <p class="text-center text-gray-300 mb-6">Click an event from the left column to add it to your timeline. Click an event in your timeline to remove it.</p>
+                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Unordered Events -->
+                    <div>
+                        <h3 class="text-lg font-semibold mb-2 border-b-2 border-purple-500 pb-1">Available Events</h3>
+                        <div id="historian-options" class="space-y-2 min-h-[250px] bg-gray-800 p-3 rounded-lg"></div>
+                    </div>
+                    <!-- Player's Timeline -->
+                    <div>
+                        <h3 class="text-lg font-semibold mb-2 border-b-2 border-purple-500 pb-1">Your Timeline (Oldest to Newest)</h3>
+                        <div id="historian-timeline" class="space-y-2 min-h-[250px] bg-gray-800 p-3 rounded-lg"></div>
+                    </div>
+                 </div>
+             </div>
+             <!-- Historian Result View -->
+             <div id="historian-result-view" class="hidden">
+                <h3 class="text-2xl font-bold text-center mb-4">Timeline Comparison</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h4 class="text-xl font-semibold mb-2 text-red-400">Your Attempt</h4>
+                        <div id="player-timeline-result" class="space-y-2"></div>
+                    </div>
+                    <div>
+                        <h4 class="text-xl font-semibold mb-2 text-green-400">Correct Timeline</h4>
+                        <div id="correct-timeline-result" class="space-y-2"></div>
+                    </div>
+                </div>
+             </div>
+             <div class="text-center mt-6 flex justify-center items-center gap-4">
+                 <button class="back-to-menu-btn bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-lg transition-colors">Main Menu</button>
+                 <button id="historian-submit-btn" class="bg-purple-700 hover:bg-purple-800 text-white font-bold py-3 px-6 rounded-lg transition-colors">Submit Timeline</button>
+                 <button id="historian-next-btn" class="hidden bg-purple-700 hover:bg-purple-800 text-white font-bold py-3 px-6 rounded-lg transition-colors">Next Challenge</button>
+             </div>
+        </div>
+
+        <!-- Flashcard Screen -->
+        <div id="flashcard-screen" class="hidden w-full max-w-2xl flex-col items-center">
+            <h2 id="flashcard-title" class="text-2xl font-bold text-purple-400 mb-4">Flashcard Study</h2>
+            <div id="flashcard-container" class="w-full h-80 perspective-1000">
+                <div class="flashcard bg-gray-800 rounded-lg shadow-lg cursor-pointer">
+                    <div class="flashcard-inner">
+                        <div id="flashcard-front" class="flashcard-front bg-gray-800"></div>
+                        <div id="flashcard-back" class="flashcard-back bg-gray-700"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="flex justify-between items-center w-full mt-6">
+                <button id="flashcard-prev-btn" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition-colors">Previous</button>
+                <div id="flashcard-progress" class="text-lg">1 / X</div>
+                <button id="flashcard-next-btn" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition-colors">Next</button>
+            </div>
+             <button class="back-to-menu-btn mt-8 bg-purple-700 hover:bg-purple-800 text-white font-bold py-3 px-6 rounded-lg transition-colors">Back to Main Menu</button>
+        </div>
+    </div>
+
+    <!-- Generic Modal Structure -->
+    <div id="modal-backdrop" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 hidden z-50">
+        <div id="modal-content" class="bg-gray-800 rounded-lg shadow-2xl w-full max-w-lg p-6 relative">
+            <h3 id="modal-title" class="text-2xl font-bold mb-4 text-purple-400">Modal Title</h3>
+            <div id="modal-body" class="text-gray-300">
+                <!-- Modal content goes here -->
+            </div>
+            <button id="modal-close-btn" class="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl">&times;</button>
+        </div>
+    </div>
+
+    <!-- AI Response Modal Structure -->
+    <div id="ai-modal-backdrop" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 hidden z-50">
+        <div class="bg-gray-800 rounded-lg shadow-2xl w-full max-w-2xl p-6 relative max-h-[90vh] flex flex-col">
+            <h3 id="ai-modal-title" class="text-2xl font-bold mb-4 text-purple-400">AI Generated Profile</h3>
+            <div id="ai-modal-body" class="text-gray-300 overflow-y-auto pr-2">
+                <!-- AI content goes here -->
+            </div>
+            <button id="ai-modal-close-btn" class="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl">&times;</button>
+        </div>
+    </div>
+
+
+<script>
+// --- CORE GAME DATA --- //
+// This object contains all the questions, answers, and educational content for the game.
+// It is derived exclusively from the provided master research document.
+const gameData = {
+    regionName: "New Zealand",
+    historian: [
+        {
+            title: "The Birth of an Industry",
+            events: [
+                { year: 1819, text: "Reverend Samuel Marsden plants the first grapevines in Kerikeri, Northland." },
+                { year: 1840, text: "James Busby's 'light white wine' is sampled by French explorer Dumont d’Urville." },
+                { year: 1851, text: "French missionaries establish what is now Mission Estate in Hawke's Bay." },
+                { year: 1919, text: "A national prohibition vote narrowly fails due to the votes of returning WWI soldiers." },
+                { year: 1944, text: "The Brajkovich family establishes San Marino Vineyards, the precursor to Kumeu River." }
+            ]
+        },
+        {
+            title: "The Modern Quality Revolution",
+            events: [
+                { year: 1960, text: "Laws are relaxed, allowing licensed restaurants to serve 'light table wine'." },
+                { year: 1973, text: "Montana Wines makes a landmark purchase of 1,200 hectares in Marlborough, planting the region's first commercial vines." },
+                { year: 1974, text: "Matua Valley releases the first commercial New Zealand Sauvignon Blanc, grown in Auckland." },
+                { year: 1979, text: "Montana releases the first commercial Marlborough Sauvignon Blanc." },
+                { year: 1985, text: "Cloudy Bay is established, and its first vintage of Sauvignon Blanc achieves global recognition." }
+            ]
+        },
+        {
+            title: "Expansion and Legal Foundation",
+            events: [
+                { year: 1986, text: "A government-sponsored vine pull scheme removes a quarter of the country's vines, mostly hybrids." },
+                { year: 1987, text: "The first commercial Pinot Noirs from Central Otago are released by Gibbston Valley and Rippon." },
+                { year: 2001, text: "The New Zealand Screwcap Wine Seal Initiative is launched, revolutionizing wine closures." },
+                { year: 2006, text: "The Geographical Indications (Wine and Spirits) Registration Act is passed by Parliament." },
+                { year: 2017, text: "The GI Act fully comes into force, establishing the legal basis for protecting regional names." }
+            ]
+        },
+        {
+            title: "Pioneers of Pinot Noir",
+            events: [
+                { year: 1883, text: "William Beetham plants the first documented Pinot Noir in the Wairarapa." },
+                { year: 1976, text: "Nick Nobilo plants Pinot Noir in Auckland, a key step in its modern history." },
+                { year: 1983, text: "A St Helena Pinot Noir from near Christchurch wins a gold medal at the national wine awards." },
+                { year: 1987, text: "The first commercial Pinot Noirs from Central Otago are released." },
+                { year: 2002, text: "The 2002 vintage of Central Otago Pinot Noir is showcased to critics in London, making a global splash." }
+            ]
+        },
+        {
+            title: "Key Moments in Hawke's Bay",
+            events: [
+                { year: 1851, text: "Mission Estate is founded by Marist priests, becoming NZ's oldest winery." },
+                { year: 1896, text: "Te Mata Estate is established, another historic pillar of the region." },
+                { year: 1965, text: "Tom McDonald of McWilliams releases a benchmark Cabernet Sauvignon, proving the region's fine wine potential." },
+                { year: 1981, text: "The first vines are planted on the Gimblett Gravels, a former riverbed." },
+                { year: 1996, text: "The Te Mata Special Character Zone is legally protected, NZ's first legally defined wine-growing area." }
+            ]
+        }
+    ],
+    terroir: [
+        {
+            question: "What is the most dominant basement rock underlying the majority of New Zealand's wine regions?",
+            options: ["Limestone", "Granite", "Greywacke", "Basalt"],
+            correctAnswer: "Greywacke",
+            explanation: "The basement rock for most of both the North and South Islands is Mesozoic greywacke, a hard sedimentary rock. Most vineyards, however, are planted on younger alluvial deposits on top of this.",
+            subjectType: "place",
+            subjectName: "New Zealand Geology"
+        },
+        {
+            question: "In Central Otago, intense heat and pressure have metamorphosed the basement rock into what?",
+            options: ["Marble", "Slate", "Haast Schist", "Quartzite"],
+            correctAnswer: "Haast Schist",
+            explanation: "In the southern part of the South Island, particularly Central Otago, the greywacke basement rock has been metamorphosed into Haast Schist, a flaky, mica-rich rock that is the parent material for many famous vineyards.",
+            subjectType: "place",
+            subjectName: "Central Otago Geology"
+        },
+        {
+            question: "The famous Gimblett Gravels sub-region of Hawke's Bay is defined by what specific soil type?",
+            options: ["Volcanic Loam", "Limestone Clay", "Alluvial Gravels", "Wind-blown Loess"],
+            correctAnswer: "Alluvial Gravels",
+            explanation: "The Gimblett Gravels are an ancient riverbed, composed of free-draining alluvial gravels. These stony soils are low in fertility and retain heat, ideal for ripening Bordeaux varieties and Syrah.",
+            subjectType: "place",
+            subjectName: "Gimblett Gravels"
+        },
+        {
+            question: "What is the primary climatic effect created by the Southern Alps that makes viticulture possible in eastern New Zealand?",
+            options: ["Coastal Fog", "Rain Shadow Effect", "Monsoonal Winds", "Polar Vortex"],
+            correctAnswer: "Rain Shadow Effect",
+            explanation: "The Southern Alps create a dramatic rain shadow, shielding eastern regions like Marlborough, Canterbury, and Central Otago from the prevailing wet westerly winds, resulting in much drier and sunnier conditions.",
+            subjectType: "place",
+            subjectName: "Southern Alps Rain Shadow"
+        },
+        {
+            question: "Which New Zealand wine region is the world's most southerly and has a true semi-continental climate?",
+            options: ["Marlborough", "Wairarapa", "Central Otago", "Canterbury"],
+            correctAnswer: "Central Otago",
+            explanation: "Central Otago is the world's most southerly commercial wine region and New Zealand's only true semi-continental climate, characterized by hot summers, cold winters, and a large diurnal temperature range.",
+            subjectType: "place",
+            subjectName: "Central Otago Climate"
+        },
+        {
+            question: "Which two soil properties of alluvial gravels are most critical for producing high-quality, concentrated grapes?",
+            options: ["High Fertility and Water Retention", "Low Fertility and Excellent Drainage", "High pH and Organic Matter", "Low pH and Clay Content"],
+            correctAnswer: "Low Fertility and Excellent Drainage",
+            explanation: "Alluvial gravels are prized for their low fertility and excellent drainage, which naturally devigorates the vine and forces its roots deep, concentrating flavor in the grapes.",
+            subjectType: "place",
+            subjectName: "Alluvial Gravel Soils"
+        },
+        {
+            question: "The wind-blown silt that often overlies alluvial deposits in regions like Canterbury and Central Otago is known as what?",
+            options: ["Marl", "Loess", "Humus", "Alluvium"],
+            correctAnswer: "Loess",
+            explanation: "Loess is a fine, wind-blown silt that frequently forms the topsoil layer over gravels and other deposits in many of New Zealand's eastern wine regions.",
+            subjectType: "place",
+            subjectName: "Loess Soil"
+        },
+        {
+            question: "Which of these regions is NOT located on the North Island?",
+            options: ["Hawke's Bay", "Wairarapa", "Gisborne", "Nelson"],
+            correctAnswer: "Nelson",
+            explanation: "Nelson is located at the top of the South Island, west of Marlborough. Hawke's Bay, Wairarapa, and Gisborne are all key regions on the North Island.",
+            subjectType: "place",
+            subjectName: "Nelson GI"
+        },
+        {
+            question: "The Awatere Valley, a sub-region of Marlborough, is known for producing Sauvignon Blanc with what distinct character compared to the Wairau Valley?",
+            options: ["Riper tropical fruit and lower acidity", "More herbaceous, grassy notes and flinty acidity", "Oaky and buttery notes", "Sweet, honeyed notes"],
+            correctAnswer: "More herbaceous, grassy notes and flinty acidity",
+            explanation: "The Awatere Valley is cooler, drier, and windier than the Wairau, producing a distinctive style of Sauvignon Blanc with more herbaceous (grassy, capsicum) and mineral notes and a sharp, linear acidity.",
+            subjectType: "place",
+            subjectName: "Awatere Valley"
+        },
+        {
+            question: "Limestone, a prized but rare soil type in New Zealand, is a key feature of which two regions?",
+            options: ["Marlborough and Gisborne", "Auckland and Northland", "North Canterbury and Waitaki Valley", "Hawke's Bay and Martinborough"],
+            correctAnswer: "North Canterbury and Waitaki Valley",
+            explanation: "While most of NZ is dominated by greywacke-derived soils, significant limestone outcrops are a defining feature of the terroir in North Canterbury (especially Waipara/Waikari) and the Waitaki Valley.",
+            subjectType: "place",
+            subjectName: "New Zealand Limestone Soils"
+        },
+        {
+            question: "What is the most significant viticultural hazard in Central Otago, requiring extensive use of frost fans and helicopters?",
+            options: ["Drought", "Hail", "Frost", "High Winds"],
+            correctAnswer: "Frost",
+            explanation: "Due to its inland, high-altitude location and continental climate, frost (both spring and autumn) is the single biggest viticultural risk in Central Otago.",
+            subjectType: "place",
+            subjectName: "Central Otago Viticultural Risks"
+        },
+        {
+            question: "The Moutere Hills sub-region of Nelson is known for what type of soil?",
+            options: ["Stony Alluvial Loam", "Gravelly Clay", "Volcanic Scoria", "Pure Limestone"],
+            correctAnswer: "Gravelly Clay",
+            explanation: "The Moutere Hills are characterized by heavier, gravel-threaded clay soils that retain more moisture, producing richer, more textural wines compared to the Waimea Plains.",
+            subjectType: "place",
+            subjectName: "Moutere Hills"
+        },
+        {
+            question: "Which major river system is responsible for creating the alluvial terraces of the Wairarapa region, including Martinborough?",
+            options: ["Wairau River", "Ngaruroro River", "Ruamahanga River", "Waitaki River"],
+            correctAnswer: "Ruamahanga River",
+            explanation: "The Ruamahanga River and its tributaries created the free-draining alluvial terraces that are the foundation of the Wairarapa's vineyards in Martinborough, Gladstone, and Masterton.",
+            subjectType: "place",
+            subjectName: "Wairarapa GI"
+        },
+        {
+            question: "What is the approximate latitude range of New Zealand's wine regions?",
+            options: ["25°S to 35°S", "34°S to 47°S", "40°S to 50°S", "30°S to 40°S"],
+            correctAnswer: "34°S to 47°S",
+            explanation: "New Zealand's vineyards stretch over a significant latitudinal range, from approximately 34°S in sub-tropical Northland to 47°S in the cool, continental south near Central Otago.",
+            subjectType: "place",
+            subjectName: "New Zealand Geography"
+        },
+        {
+            question: "Which North Island region is known as the 'Chardonnay Capital of New Zealand' and widely practices dry farming?",
+            options: ["Auckland", "Hawke's Bay", "Wairarapa", "Gisborne"],
+            correctAnswer: "Gisborne",
+            explanation: "Gisborne is renowned for its high-quality Chardonnay. Its fertile, moisture-retentive silt loams and clay soils allow for the widespread practice of dry farming (viticulture without irrigation).",
+            subjectType: "place",
+            subjectName: "Gisborne GI"
+        },
+        {
+            question: "The Bridge Pa Triangle is a producer-defined sub-region within which major GI?",
+            options: ["Marlborough", "Central Otago", "Hawke's Bay", "Canterbury"],
+            correctAnswer: "Hawke's Bay",
+            explanation: "The Bridge Pa Triangle, along with the Gimblett Gravels, is a key sub-region on the Heretaunga Plains within Hawke's Bay, known for its premium red wines.",
+            subjectType: "place",
+            subjectName: "Bridge Pa Triangle"
+        },
+        {
+            question: "The 'Martinborough Terrace' is a prized geological feature defined by its shallow silt loam over deep, free-draining what?",
+            options: ["Clay", "Limestone", "Gravels", "Sandstone"],
+            correctAnswer: "Gravels",
+            explanation: "The Martinborough Terrace, the heart of the Martinborough GI, is defined by its shallow topsoils over very deep, free-draining alluvial gravels, perfect for high-quality Pinot Noir.",
+            subjectType: "place",
+            subjectName: "Martinborough GI"
+        },
+        {
+            question: "Which region boasts the highest sunshine hours in New Zealand, often vying with Marlborough for the title?",
+            options: ["Auckland", "Nelson", "Canterbury", "Wairarapa"],
+            correctAnswer: "Nelson",
+            explanation: "Nelson, located at the top of the South Island, is renowned for its high sunshine hours, often exceeding 2,400 hours annually, making it one of the sunniest places in the country.",
+            subjectType: "place",
+            subjectName: "Nelson GI"
+        },
+        {
+            question: "The Southern Valleys of Marlborough (Omaka, Brancott, Waihopai) are particularly important for growing which grape variety due to their heavier clay-loam soils?",
+            options: ["Sauvignon Blanc", "Riesling", "Pinot Noir", "Pinot Gris"],
+            correctAnswer: "Pinot Noir",
+            explanation: "The heavier, cooler, clay-loam soils of the Southern Valleys provide better moisture retention and are highly prized for producing Marlborough's most structured and complex Pinot Noir.",
+            subjectType: "place",
+            subjectName: "Southern Valleys"
+        },
+        {
+            question: "What is the primary reason for the large diurnal temperature range in Central Otago?",
+            options: ["Its proximity to the ocean", "Its low altitude", "Its inland, semi-continental climate", "Its high annual rainfall"],
+            correctAnswer: "Its inland, semi-continental climate",
+            explanation: "As New Zealand's only semi-continental region, shielded from the ocean's moderating influence, Central Otago experiences significant temperature swings between hot days and cool nights.",
+            subjectType: "place",
+            subjectName: "Central Otago Climate"
+        },
+        {
+            question: "The Teviotdale Hills provide shelter from cool easterly winds for which important sub-region?",
+            options: ["Gibbston", "Bannockburn", "Waipara Valley", "Awatere Valley"],
+            correctAnswer: "Waipara Valley",
+            explanation: "The Waipara Valley in North Canterbury benefits from the Teviotdale Hills, which protect it from cool easterly winds, making its climate slightly warmer and drier than nearby Christchurch.",
+            subjectType: "place",
+            subjectName: "Waipara Valley"
+        },
+        {
+            question: "Which GI is located on a boutique island in the Hauraki Gulf and is famous for its premium Bordeaux-style blends?",
+            options: ["Matakana", "Kumeu", "Waiheke Island", "Northland"],
+            correctAnswer: "Waiheke Island",
+            explanation: "Waiheke Island, part of the Auckland GI, has a warmer, drier microclimate ideal for ripening red grapes and is famous for its world-class Cabernet and Merlot blends.",
+            subjectType: "place",
+            subjectName: "Waiheke Island GI"
+        },
+        {
+            question: "What is the name of the high peak that is a cultural and viticultural landmark in Hawke's Bay?",
+            options: ["Mount Cook", "Mount Ruapehu", "Te Mata Peak", "Mount Taranaki"],
+            correctAnswer: "Te Mata Peak",
+            explanation: "Te Mata Peak dominates the Heretaunga Plains and its sun-drenched northern slopes provide exceptional vineyard sites. The area is protected as the Te Mata Special Character Zone.",
+            subjectType: "place",
+            subjectName: "Te Mata Peak"
+        },
+        {
+            question: "Which of these is NOT a major sub-region of Central Otago?",
+            options: ["Gibbston", "Bannockburn", "Bendigo", "Waimea Plains"],
+            correctAnswer: "Waimea Plains",
+            explanation: "The Waimea Plains are a key sub-region of Nelson. Gibbston, Bannockburn, and Bendigo are all famous sub-regions within Central Otago.",
+            subjectType: "place",
+            subjectName: "Central Otago GI"
+        },
+        {
+            question: "The soils in Kumeu, a sub-region of Auckland famous for Chardonnay, are predominantly what type?",
+            options: ["Sandy Loam", "Heavy Clays", "Alluvial Gravels", "Limestone"],
+            correctAnswer: "Heavy Clays",
+            explanation: "Kumeu's terroir is defined by its heavy clay and clay-loam soils, which contribute to the power, texture, and longevity of its world-class Chardonnays.",
+            subjectType: "place",
+            subjectName: "Kumeu GI"
+        },
+        {
+            question: "Which region is described as having a 'warm soil in a cool climate' paradigm, allowing warmer climate grapes to ripen?",
+            options: ["All of New Zealand", "Central Otago only", "Northland only", "Key regions with stony, alluvial soils"],
+            correctAnswer: "Key regions with stony, alluvial soils",
+            explanation: "The national terroir is characterized by a 'warm soil in a cool climate' paradigm, where heat-retentive stony soils (like in Marlborough and Hawke's Bay) in a cool maritime climate allow for the successful ripening of a wide range of varieties.",
+            subjectType: "place",
+            subjectName: "New Zealand Terroir"
+        },
+        {
+            question: "What is the average annual rainfall in the driest parts of Central Otago, such as Alexandra?",
+            options: ["Around 1000 mm", "Around 650 mm", "Around 375 mm", "Over 1200 mm"],
+            correctAnswer: "Around 375 mm",
+            explanation: "Central Otago is extremely dry due to the rain shadow effect. The Alexandra area receives as little as 375 mm of rain annually, making it New Zealand's most arid spot.",
+            subjectType: "place",
+            subjectName: "Central Otago Climate"
+        },
+        {
+            question: "Which direction do the prevailing moisture-laden winds come from in New Zealand?",
+            options: ["East", "West", "North", "South"],
+            correctAnswer: "West",
+            explanation: "The prevailing winds are westerlies coming off the Tasman Sea. The central mountain ranges block this moisture, creating the dry conditions on the eastern side of the islands where vineyards are planted.",
+            subjectType: "place",
+            subjectName: "New Zealand Climate"
+        },
+        {
+            question: "The fertile, alluvial soils of Gisborne are primarily composed of what?",
+            options: ["Coarse gravel and stones", "Fine silt loams and heavier clays", "Volcanic ash and pumice", "Pure sand"],
+            correctAnswer: "Fine silt loams and heavier clays",
+            explanation: "Gisborne's soils are youthful and fertile, dominated by fine silt loams and clays with high moisture-holding capacity, which is why dry farming is common.",
+            subjectType: "place",
+            subjectName: "Gisborne GI"
+        },
+        {
+            question: "Which of these is the coolest, highest-altitude sub-region of Central Otago, known for elegant, perfumed Pinot Noir?",
+            options: ["Bannockburn", "Bendigo", "Gibbston", "Alexandra"],
+            correctAnswer: "Gibbston",
+            explanation: "Gibbston, often called the 'Valley of the Vines', is the highest and coolest sub-region, producing Pinot Noir known for its delicate aromatics, elegance, and lighter body.",
+            subjectType: "place",
+            subjectName: "Gibbston"
+        },
+        {
+            question: "The Richmond Range provides a rain shadow for Marlborough, separating it from which other wine region?",
+            options: ["Canterbury", "Central Otago", "Nelson", "Wairarapa"],
+            correctAnswer: "Nelson",
+            explanation: "The Richmond Range lies to the west of Marlborough's Wairau Valley, creating a rain shadow and separating it from the Nelson region.",
+            subjectType: "place",
+            subjectName: "Marlborough GI"
+        },
+        {
+            question: "Which North Island region has an almost subtropical, humid climate, making it the warmest in New Zealand?",
+            options: ["Auckland", "Gisborne", "Hawke's Bay", "Northland"],
+            correctAnswer: "Northland",
+            explanation: "As New Zealand's northernmost region, Northland has a warm, humid, almost subtropical climate, making it suitable for later-ripening red varieties but also presenting challenges with humidity.",
+            subjectType: "place",
+            subjectName: "Northland GI"
+        },
+        {
+            question: "The 'Canterbury Plains' sub-region of Canterbury is generally characterized by what soil type?",
+            options: ["Limestone-derived clays", "Volcanic loams", "Silt loams over gravel", "Heavy clay"],
+            correctAnswer: "Silt loams over gravel",
+            explanation: "The extensive, flat Canterbury Plains, west of Christchurch, are typically characterized by silt loams overlying deep gravel beds deposited by ancient rivers.",
+            subjectType: "place",
+            subjectName: "Canterbury GI"
+        },
+        {
+            question: "What is the approximate distance of the furthest New Zealand vineyard from the ocean?",
+            options: ["20 km", "50 km", "120 km", "200 km"],
+            correctAnswer: "120 km",
+            explanation: "A defining feature of New Zealand's geography is that no vineyard is located more than 120 km from the ocean, ensuring a strong maritime influence across almost all regions.",
+            subjectType: "place",
+            subjectName: "New Zealand Geography"
+        },
+        {
+            question: "Which region is home to the country's oldest winery, Mission Estate?",
+            options: ["Auckland", "Hawke's Bay", "Northland", "Gisborne"],
+            correctAnswer: "Hawke's Bay",
+            explanation: "Hawke's Bay is New Zealand's oldest wine region, home to Mission Estate, which was founded in 1851.",
+            subjectType: "place",
+            subjectName: "Hawke's Bay GI"
+        },
+        {
+            question: "Which GI is located on the border of Canterbury and Otago and is defined by its Oligocene limestone soils?",
+            options: ["Waipara Valley", "Bannockburn", "Waitaki Valley", "Gladstone"],
+            correctAnswer: "Waitaki Valley",
+            explanation: "The Waitaki Valley is a new and marginal region whose terroir is defined by the presence of limestone and calcareous soils, producing wines with distinctive minerality.",
+            subjectType: "place",
+            subjectName: "Waitaki Valley GI"
+        },
+        {
+            question: "Which two North Island regions feature significant volcanic soils?",
+            options: ["Gisborne and Wairarapa", "Hawke's Bay and Martinborough", "Auckland and Northland", "Waiheke and Kumeu"],
+            correctAnswer: "Auckland and Northland",
+            explanation: "While alluvial soils dominate nationally, the northern parts of the North Island, particularly Auckland and Northland, feature significant areas of volcanic soils.",
+            subjectType: "place",
+            subjectName: "North Island Geology"
+        },
+        {
+            question: "The Cromwell Basin is the heartland of which major wine region?",
+            options: ["Marlborough", "Canterbury", "Central Otago", "Hawke's Bay"],
+            correctAnswer: "Central Otago",
+            explanation: "The Cromwell Basin, including sub-regions like Bannockburn, Pisa, and Lowburn, is the geographical and viticultural heart of the Central Otago GI.",
+            subjectType: "place",
+            subjectName: "Cromwell Basin"
+        },
+        {
+            question: "Which sub-region of Central Otago is known as 'the Heart of the Desert' and is one of the warmest and driest sites?",
+            options: ["Gibbston", "Wanaka", "Alexandra", "Bannockburn"],
+            correctAnswer: "Bannockburn",
+            explanation: "Bannockburn, now its own GI, is one of the warmest and driest parts of Central Otago, known for producing powerful, structured, and complex Pinot Noir.",
+            subjectType: "place",
+            subjectName: "Bannockburn GI"
+        },
+        {
+            question: "The Waimea Plains sub-region of Nelson is known for what type of soil?",
+            options: ["Gravelly Clay", "Limestone", "Stony, alluvial loam soils", "Volcanic ash"],
+            correctAnswer: "Stony, alluvial loam soils",
+            explanation: "The Waimea Plains are dominated by stony, alluvial loam soils from the former riverbed, which are free-draining and produce brighter, more aromatic white wines.",
+            subjectType: "place",
+            subjectName: "Waimea Plains"
+        },
+        {
+            question: "Which of these is the most significant climatic risk for the humid, northern regions like Northland and Gisborne during harvest?",
+            options: ["Frost", "Drought", "Unseasonal Rainfall", "High Winds"],
+            correctAnswer: "Unseasonal Rainfall",
+            explanation: "In the warmer, more humid northern regions, unseasonal rainfall during the autumn harvest is a major risk, increasing the threat of botrytis bunch rot.",
+            subjectType: "place",
+            subjectName: "North Island Viticultural Risks"
+        },
+        {
+            question: "What is the name of the mountain ranges that provide a rain shadow for the Wairarapa region?",
+            options: ["Southern Alps", "Richmond Range", "Tararua and Rimutaka Ranges", "Kaikoura Ranges"],
+            correctAnswer: "Tararua and Rimutaka Ranges",
+            explanation: "The Wairarapa valley is sheltered from the west by the Tararua and Rimutaka mountain ranges, which create a rain shadow effect, leading to low rainfall and high sunshine.",
+            subjectType: "place",
+            subjectName: "Wairarapa GI"
+        },
+        {
+            question: "Which region has a climate with heat summations sitting between those of Burgundy and Bordeaux?",
+            options: ["Central Otago", "Marlborough", "Hawke's Bay", "Canterbury"],
+            correctAnswer: "Hawke's Bay",
+            explanation: "Hawke's Bay's warm, sunny climate has heat summations (GDD) that are generally warmer than Burgundy but cooler than Bordeaux, making it ideal for a range of varieties including Merlot and Syrah.",
+            subjectType: "place",
+            subjectName: "Hawke's Bay Climate"
+        },
+        {
+            question: "The Southern Alps are primarily composed of which rock type?",
+            options: ["Granite", "Basalt", "Greywacke", "Limestone"],
+            correctAnswer: "Greywacke",
+            explanation: "The Southern Alps, like much of New Zealand's backbone, are primarily composed of Mesozoic greywacke. The alluvial plains to the east are formed from eroded deposits of this rock.",
+            subjectType: "place",
+            subjectName: "Southern Alps Geology"
+        },
+        {
+            question: "What is the key topographical reason that no NZ vineyard is more than 120km from the sea?",
+            options: ["The country is very flat", "The country is a long, narrow landmass", "All vineyards are on the coast", "The mountains are in the center"],
+            correctAnswer: "The country is a long, narrow landmass",
+            explanation: "New Zealand's elongated shape means that even its most inland regions are relatively close to the coast, ensuring a strong maritime influence that moderates temperatures.",
+            subjectType: "place",
+            subjectName: "New Zealand Geography"
+        },
+        {
+            question: "Which GI is home to the historic gold rush town of Arrowtown, linking its pioneering history to early viticulture?",
+            options: ["Marlborough", "Canterbury", "Hawke's Bay", "Central Otago"],
+            correctAnswer: "Central Otago",
+            explanation: "The gold rush of the 19th century brought the first European settlers, like Jean Desire Feraud, who made the region's first award-winning wine. The historic town of Arrowtown is a link to this era.",
+            subjectType: "place",
+            subjectName: "Central Otago History"
+        },
+        {
+            question: "Which region has soils described as 'pinkish iron-rich soils' on north-facing slopes, well-suited for full-bodied reds?",
+            options: ["Kumeu", "Waiheke Island", "Matakana", "Northland"],
+            correctAnswer: "Matakana",
+            explanation: "The Matakana GI, north of Auckland, is known for its old, well-structured, iron-rich clay soils, which are excellent for producing powerful red wines like Syrah.",
+            subjectType: "place",
+            subjectName: "Matakana GI"
+        },
+        {
+            question: "In which GI would you find the Ormond, Manutuke, and Patutahi sub-regions?",
+            options: ["Hawke's Bay", "Gisborne", "Wairarapa", "Auckland"],
+            correctAnswer: "Gisborne",
+            explanation: "Ormond, Manutuke, and Patutahi are all unofficial sub-regions within the Gisborne GI, known for their fertile alluvial soils and high-quality Chardonnay.",
+            subjectType: "place",
+            subjectName: "Gisborne GI"
+        },
+        {
+            question: "Which of these is NOT one of the three main valleys of Marlborough?",
+            options: ["Wairau Valley", "Southern Valleys", "Awatere Valley", "Gibbston Valley"],
+            correctAnswer: "Gibbston Valley",
+            explanation: "The Gibbston Valley is a key sub-region of Central Otago. Marlborough's main sub-regions are the Wairau, Southern, and Awatere Valleys.",
+            subjectType: "place",
+            subjectName: "Marlborough GI"
+        },
+        {
+            question: "Which GI is the most recent to be officially registered, in February 2022?",
+            options: ["North Canterbury", "Bannockburn", "Kumeu", "Gladstone"],
+            correctAnswer: "Bannockburn",
+            explanation: "Bannockburn, a famous sub-region of Central Otago, became its own official local GI on February 1, 2022.",
+            subjectType: "place",
+            subjectName: "Bannockburn GI"
+        }
+    ],
+    grapes: [
+        {
+            question: "The vast majority of New Zealand's Sauvignon Blanc plantings trace their lineage back to which single clone?",
+            options: ["Dijon 76", "Pommard Clone", "UCD Clone 1", "Mendoza Clone"],
+            correctAnswer: "UCD Clone 1",
+            explanation: "Nearly all of NZ's Sauvignon Blanc originates from UCD Clone 1, which was selected at Château d’Yquem, propagated at UC Davis, and imported in the 1970s. It's now known locally as 'Savvy MS'.",
+            subjectType: "grape",
+            subjectName: "Sauvignon Blanc"
+        },
+        {
+            question: "What is the name of the unique New Zealand heritage clone of Pinot Noir, rumored to be a cutting from Domaine de la Romanée-Conti?",
+            options: ["Dijon 115", "Pommard 5", "Mendoza Clone", "Abel Clone"],
+            correctAnswer: "Abel Clone",
+            explanation: "The Abel Clone, also known as the 'Ata Rangi clone', is a prized heritage clone of Pinot Noir. Legend says it was a cutting from DRC confiscated by customs officer Malcolm Abel.",
+            subjectType: "grape",
+            subjectName: "Pinot Noir"
+        },
+        {
+            question: "What is the dominant vine training system used throughout New Zealand?",
+            options: ["Gobelet (Bush Vine)", "Pergola", "Vertical Shoot Positioning (VSP)", "Lyre"],
+            correctAnswer: "Vertical Shoot Positioning (VSP)",
+            explanation: "VSP is the dominant training system. It creates a narrow, vertical canopy that maximizes sunlight, improves airflow, and is well-suited to mechanization.",
+            subjectType: "grape",
+            subjectName: "Vine Training Systems"
+        },
+        {
+            question: "Which of these is NOT one of the common Dijon clones of Pinot Noir found in New Zealand?",
+            options: ["115", "667", "777", "UCD 1"],
+            correctAnswer: "UCD 1",
+            explanation: "UCD 1 is the primary clone of Sauvignon Blanc. The Dijon clones 114, 115, 667, and 777 are all widely used for high-quality Pinot Noir production in New Zealand.",
+            subjectType: "grape",
+            subjectName: "Pinot Noir"
+        },
+        {
+            question: "What are the two main classes of chemical compounds responsible for the pungent aroma of New Zealand Sauvignon Blanc?",
+            options: ["Terpenes and Esters", "Aldehydes and Ketones", "Phenols and Tannins", "Methoxypyrazines and Thiols"],
+            correctAnswer: "Methoxypyrazines and Thiols",
+            explanation: "The unique aroma of NZ Sauvignon Blanc comes from a combination of methoxypyrazines (green, herbaceous notes) and thiols (tropical fruit notes like passionfruit).",
+            subjectType: "grape",
+            subjectName: "Sauvignon Blanc"
+        },
+        {
+            question: "In New Zealand viticulture, what is the practice of 'dry farming'?",
+            options: ["Farming in a desert", "Using special drought-resistant rootstocks", "Cultivation without irrigation", "Only watering the vines at night"],
+            correctAnswer: "Cultivation without irrigation",
+            explanation: "Dry farming is the practice of growing grapes without supplemental irrigation. It's most successful in regions like Gisborne, where soils have high water-holding capacity.",
+            subjectType: "grape",
+            subjectName: "Viticultural Techniques"
+        },
+        {
+            question: "Which red grape variety is Hawke's Bay's specialty, with the region accounting for 77% of the country's plantings?",
+            options: ["Pinot Noir", "Syrah", "Cabernet Sauvignon", "Malbec"],
+            correctAnswer: "Syrah",
+            explanation: "While Pinot Noir is NZ's most planted red, Syrah is the star of Hawke's Bay, producing elegant, aromatic styles often compared to the Northern Rhône.",
+            subjectType: "grape",
+            subjectName: "Syrah"
+        },
+        {
+            question: "The 'Mendoza' clone is a particularly important clone for which white grape variety in New Zealand?",
+            options: ["Sauvignon Blanc", "Riesling", "Pinot Gris", "Chardonnay"],
+            correctAnswer: "Chardonnay",
+            explanation: "The Mendoza clone of Chardonnay, known for its 'hen and chicken' berries (millerandage), is prized for producing wines with high extract and acidity. It was first imported to Gisborne.",
+            subjectType: "grape",
+            subjectName: "Chardonnay"
+        },
+        {
+            question: "What is the most common pruning method used in conjunction with the VSP training system in New Zealand?",
+            options: ["Spur Pruning", "Guyot System (Cane Pruning)", "Head Pruning", "Basket Pruning"],
+            correctAnswer: "Guyot System (Cane Pruning)",
+            explanation: "The Guyot system, where one or more long canes are retained each winter, is the most common pruning method used with VSP trellising for varieties like Sauvignon Blanc.",
+            subjectType: "grape",
+            subjectName: "Vine Training Systems"
+        },
+        {
+            question: "Which of these factors is thought to contribute significantly to the high intensity of aromas in New Zealand grapes?",
+            options: ["Low rainfall", "High humidity", "High intensity of ultraviolet (UV) light", "Volcanic soils"],
+            correctAnswer: "High intensity of ultraviolet (UV) light",
+            explanation: "New Zealand's clear, unpolluted air and proximity to the ozone hole result in high UV light intensity, which is believed to enhance the development of aromatic compounds and thicken grape skins.",
+            subjectType: "grape",
+            subjectName: "New Zealand Viticulture"
+        },
+        {
+            question: "What was New Zealand's most planted grape variety as recently as 1996?",
+            options: ["Sauvignon Blanc", "Chardonnay", "Müller-Thurgau", "Pinot Noir"],
+            correctAnswer: "Müller-Thurgau",
+            explanation: "Before the modern quality revolution took full hold, high-yielding varieties like Müller-Thurgau dominated. It was the most planted grape until 1996, when it was surpassed by Chardonnay.",
+            subjectType: "grape",
+            subjectName: "Müller-Thurgau"
+        },
+        {
+            question: "What is the primary reason Pinot Noir is considered a challenging grape to cultivate?",
+            options: ["It is late-ripening and requires extreme heat", "It is thick-skinned and resistant to disease", "It is early-budding and thin-skinned", "It is highly vigorous and needs constant pruning"],
+            correctAnswer: "It is early-budding and thin-skinned",
+            explanation: "Pinot Noir is notoriously difficult because it buds early (making it vulnerable to spring frost) and its thin skins make it prone to fungal diseases like botrytis.",
+            subjectType: "grape",
+            subjectName: "Pinot Noir"
+        },
+        {
+            question: "The 'Limmer clone' is a name associated with which grape variety, particularly in Hawke's Bay?",
+            options: ["Merlot", "Chardonnay", "Syrah", "Cabernet Franc"],
+            correctAnswer: "Syrah",
+            explanation: "The MS or 'Limmer clone' of Syrah was planted by Dr. Alan Limmer in the Gimblett Gravels in 1984 and is the foundation for many of Hawke's Bay's finest Syrah wines.",
+            subjectType: "grape",
+            subjectName: "Syrah"
+        },
+        {
+            question: "What is the common term for using sheep to graze in vineyards during winter dormancy?",
+            options: ["Vineyard Shepherds", "Woolly Weeders", "Grape Grazers", "Bio-mowers"],
+            correctAnswer: "Woolly Weeders",
+            explanation: "'Woolly Weeders' is the colloquial term for the sustainable practice of using sheep to control weeds and grasses in vineyards during the winter, reducing herbicide use.",
+            subjectType: "grape",
+            subjectName: "Viticultural Techniques"
+        },
+        {
+            question: "Which of these is NOT a primary reason for using the VSP trellis system?",
+            options: ["It facilitates mechanization", "It improves airflow to reduce disease", "It maximizes sunlight interception", "It protects grapes from frost"],
+            correctAnswer: "It protects grapes from frost",
+            explanation: "While VSP has many benefits for canopy management, light, and mechanization, it does not inherently protect from frost. Frost protection requires other methods like fans or sprinklers.",
+            subjectType: "grape",
+            subjectName: "Vine Training Systems"
+        },
+        {
+            question: "Which two 'alternative' white varieties are gaining a buzz in New Zealand, with small but high-quality plantings?",
+            options: ["Chenin Blanc and Sémillon", "Viognier and Marsanne", "Albariño and Grüner Veltliner", "Muscat and Gewürztraminer"],
+            correctAnswer: "Albariño and Grüner Veltliner",
+            explanation: "Albariño and Grüner Veltliner are two so-called 'alternative' varieties that are showing great promise and generating excitement, though plantings remain very small.",
+            subjectType: "grape",
+            subjectName: "Albariño"
+        },
+        {
+            question: "What is the most significant virus disease affecting New Zealand vineyards, spread by mealybugs?",
+            options: ["Powdery Mildew", "Fanleaf Virus", "Leafroll Virus", "Downy Mildew"],
+            correctAnswer: "Leafroll Virus",
+            explanation: "Grapevine Leafroll-associated Virus 3 (GLRaV-3), or simply Leafroll Virus, is a major issue that affects vine health and productivity. Controlling its vector, the mealybug, is a key focus.",
+            subjectType: "grape",
+            subjectName: "Vineyard Pests and Diseases"
+        },
+        {
+            question: "Which red Bordeaux variety is most planted in Hawke's Bay?",
+            options: ["Cabernet Sauvignon", "Merlot", "Cabernet Franc", "Petit Verdot"],
+            correctAnswer: "Merlot",
+            explanation: "Merlot is the most planted red grape in Hawke's Bay and the second most planted red in all of NZ. It is a key component of the region's famous Bordeaux-style blends.",
+            subjectType: "grape",
+            subjectName: "Merlot"
+        },
+        {
+            question: "The UCD 5 and UCD 6 clones of Pinot Noir are often referred to by what other name?",
+            options: ["Dijon Clones", "Abel Clones", "Wädenswil Clones", "Pommard Clones"],
+            correctAnswer: "Pommard Clones",
+            explanation: "The UC Davis selections UCD 5 and UCD 6 are often called Pommard clones and are valued for adding mid-palate weight and structure to Pinot Noir blends.",
+            subjectType: "grape",
+            subjectName: "Pinot Noir"
+        },
+        {
+            question: "Why is irrigation generally essential in regions like Marlborough and Central Otago?",
+            options: ["The soils have poor water retention", "The government mandates it", "The rain shadow effect causes very dry summers", "To wash away pests"],
+            correctAnswer: "The rain shadow effect causes very dry summers",
+            explanation: "The same rain shadow that provides abundant sun also leads to very low rainfall during the summer, making irrigation necessary to prevent vine water stress and ensure consistent ripening.",
+            subjectType: "grape",
+            subjectName: "Viticultural Techniques"
+        },
+        {
+            question: "A study from the University of Auckland found that machine harvesting significantly increases the level of what compound in Sauvignon Blanc?",
+            options: ["Sugar", "Acid", "Tannin", "Thiols"],
+            correctAnswer: "Thiols",
+            explanation: "The study showed that the greater maceration from machine harvesting releases more precursors, leading to 5-10 times higher levels of desirable thiols (passionfruit/gooseberry aromas).",
+            subjectType: "grape",
+            subjectName: "Sauvignon Blanc"
+        },
+        {
+            question: "Which region is particularly noted for high-quality, long-lived Riesling, with styles ranging from bone-dry to sweet?",
+            options: ["Auckland", "Hawke's Bay", "North Canterbury", "Central Otago"],
+            correctAnswer: "North Canterbury",
+            explanation: "North Canterbury (including Waipara Valley) has a strong reputation for its elegant and expressive Riesling, which accounts for a significant portion of its plantings.",
+            subjectType: "grape",
+            subjectName: "Riesling"
+        },
+        {
+            question: "What is the primary viticultural reason for 'leaf plucking' or 'leaf removal'?",
+            options: ["To reduce vine vigor", "To increase sunlight exposure and airflow around fruit", "To make the vineyard look neater", "To encourage more leaf growth"],
+            correctAnswer: "To increase sunlight exposure and airflow around fruit",
+            explanation: "Removing leaves from the fruit zone increases sun exposure (aiding ripening and color) and improves air circulation, which reduces humidity and the risk of fungal diseases.",
+            subjectType: "grape",
+            subjectName: "Canopy Management"
+        },
+        {
+            question: "Which of these is the most common and significant fungal disease threat in New Zealand vineyards?",
+            options: ["Downy Mildew", "Black Rot", "Botrytis Bunch Rot", "Eutypa Dieback"],
+            correctAnswer: "Botrytis Bunch Rot",
+            explanation: "Botrytis bunch rot (grey mould) is the most significant fungal threat, especially in humid conditions or during wet harvests, as it can ruin the grape clusters.",
+            subjectType: "grape",
+            subjectName: "Vineyard Pests and Diseases"
+        },
+        {
+            question: "What is the primary reason for the near-monoculture of the 'Savvy MS' clone of Sauvignon Blanc?",
+            options: ["It is the only clone legally allowed", "It was the first high-quality, virus-free material available", "It is resistant to all diseases", "It produces the highest yields"],
+            correctAnswer: "It was the first high-quality, virus-free material available",
+            explanation: "The 'Savvy MS' (from UCD 1) became dominant because it was the clean, high-quality plant material that pioneers like Ross Spence and Montana used to establish the variety's success.",
+            subjectType: "grape",
+            subjectName: "Sauvignon Blanc"
+        },
+        {
+            question: "On which island are the majority of New Zealand's Merlot and Cabernet Sauvignon plantings found?",
+            options: ["South Island", "North Island", "Waiheke Island only", "Stewart Island"],
+            correctAnswer: "North Island",
+            explanation: "The warmer climate of the North Island, particularly in Hawke's Bay and Waiheke Island, is necessary to consistently ripen later-ripening red varieties like Merlot and Cabernet Sauvignon.",
+            subjectType: "grape",
+            subjectName: "Merlot"
+        },
+        {
+            question: "What is the purpose of 'shoot thinning' in the spring?",
+            options: ["To increase the number of shoots", "To remove excess shoots and reduce canopy density", "To encourage earlier budding", "To protect against frost"],
+            correctAnswer: "To remove excess shoots and reduce canopy density",
+            explanation: "Shoot thinning is done early in the season to remove non-fruitful or poorly positioned shoots, which reduces canopy congestion and focuses the vine's energy on the remaining fruit-bearing shoots.",
+            subjectType: "grape",
+            subjectName: "Canopy Management"
+        },
+        {
+            question: "Which of these is NOT a characteristic of the Dijon clones of Pinot Noir?",
+            options: ["They are generally lower-yielding", "They contribute bright fruit aromatics", "They provide mid-palate weight and structure", "They contribute fine tannins and linear structure"],
+            correctAnswer: "They provide mid-palate weight and structure",
+            explanation: "Providing mid-palate weight and structure is a characteristic of the Pommard (UCD) clones. The Dijon clones are typically known for aromatics, fine tannins, and linearity.",
+            subjectType: "grape",
+            subjectName: "Pinot Noir"
+        },
+        {
+            question: "Why must most vines in New Zealand be grafted onto resistant rootstocks?",
+            options: ["To protect against nematodes", "To protect against phylloxera", "To increase yields", "To improve drought tolerance"],
+            correctAnswer: "To protect against phylloxera",
+            explanation: "The phylloxera root aphid is present in New Zealand, so Vitis vinifera vines must be grafted onto phylloxera-resistant American rootstocks to survive.",
+            subjectType: "grape",
+            subjectName: "Phylloxera"
+        },
+        {
+            question: "Which grape variety became New Zealand's most planted in 2002, overtaking Chardonnay?",
+            options: ["Pinot Noir", "Pinot Gris", "Sauvignon Blanc", "Riesling"],
+            correctAnswer: "Sauvignon Blanc",
+            explanation: "Sauvignon Blanc's meteoric rise saw it overtake Chardonnay as the most planted variety in 2002, and it has since grown to dominate the national vineyard.",
+            subjectType: "grape",
+            subjectName: "Sauvignon Blanc"
+        },
+        {
+            question: "What is the primary goal of using cover crops between vine rows?",
+            options: ["To make the vineyard look green", "To increase water in the soil", "To suppress weeds, improve soil structure, and control vigor", "To provide a secondary cash crop"],
+            correctAnswer: "To suppress weeds, improve soil structure, and control vigor",
+            explanation: "Cover crops have multiple benefits, including suppressing weeds, improving soil health and organic matter, preventing erosion, and sometimes competing with the vines to help control excessive growth.",
+            subjectType: "grape",
+            subjectName: "Cover Cropping"
+        },
+        {
+            question: "The first commercial NZ Sauvignon Blanc was grown in which region?",
+            options: ["Marlborough", "Hawke's Bay", "Nelson", "Auckland"],
+            correctAnswer: "Auckland",
+            explanation: "While Marlborough made Sauvignon Blanc famous, the very first commercial bottling was released in 1974 by Matua Valley from grapes grown in West Auckland.",
+            subjectType: "grape",
+            subjectName: "Sauvignon Blanc"
+        },
+        {
+            question: "Which of these is a key characteristic of Pinotage, a grape grown in small amounts in Northland?",
+            options: ["High acidity and light body", "Delicate floral aromas", "Thick skins and deep color", "Herbaceous green notes"],
+            correctAnswer: "Thick skins and deep color",
+            explanation: "Pinotage, a crossing of Pinot Noir and Cinsaut, is known for its thick skins, which contribute to deep color and robust tannins, making it suitable for warmer climates like Northland.",
+            subjectType: "grape",
+            subjectName: "Pinotage"
+        },
+        {
+            question: "What does 'hand-harvesting' allow for that machine harvesting does not?",
+            options: ["Faster picking", "Picking at night", "Gentler handling and sorting of fruit in the vineyard", "Increased thiol levels"],
+            correctAnswer: "Gentler handling and sorting of fruit in the vineyard",
+            explanation: "Hand-harvesting allows for careful selection and sorting of bunches directly in the vineyard and gentler handling of the fruit, which is crucial for premium still and sparkling wines.",
+            subjectType: "grape",
+            subjectName: "Harvesting"
+        },
+        {
+            question: "Which grape variety is most associated with the unofficial 'Golden Slope' of the Hexton Hills in Gisborne?",
+            options: ["Pinot Gris", "Sauvignon Blanc", "Chardonnay", "Gewürztraminer"],
+            correctAnswer: "Chardonnay",
+            explanation: "The 'Golden Slope' in Gisborne's Hexton Hills is a famed area for producing high-quality, ripe, and textural Chardonnay.",
+            subjectType: "grape",
+            subjectName: "Chardonnay"
+        },
+        {
+            question: "What is the primary challenge of growing Pinot Gris in a humid climate like Northland?",
+            options: ["It fails to ripen", "It has low acidity", "Its thin skins and compact bunches are prone to rot", "It is unattractive to birds"],
+            correctAnswer: "Its thin skins and compact bunches are prone to rot",
+            explanation: "Pinot Gris has thin skins and tightly packed bunches, which makes it highly susceptible to botrytis and other fungal rots in humid, rainy conditions.",
+            subjectType: "grape",
+            subjectName: "Pinot Gris"
+        },
+        {
+            question: "Which grape variety is used to make the iconic dessert wine 'Sweet Agnes' by Seifried Estate in Nelson?",
+            options: ["Sémillon", "Gewürztraminer", "Riesling", "Pinot Gris"],
+            correctAnswer: "Riesling",
+            explanation: "Seifried's 'Sweet Agnes' is a famous, multi-award-winning late-harvest dessert wine made from Riesling grapes, often affected by noble rot.",
+            subjectType: "grape",
+            subjectName: "Riesling"
+        },
+        {
+            question: "Which two red grapes are most important on Waiheke Island?",
+            options: ["Pinot Noir and Gamay", "Cabernet Sauvignon and Merlot (in blends)", "Syrah and Cabernet Franc", "Merlot and Malbec"],
+            correctAnswer: "Syrah and Cabernet Franc",
+            explanation: "Waiheke Island's warmer climate makes it ideal for ripening later-ripening red varieties. It is most famous for its elegant Syrah and world-class Bordeaux-style blends, in which Cabernet Sauvignon and Merlot are key.",
+            subjectType: "grape",
+            subjectName: "Syrah"
+        },
+        {
+            question: "The practice of including stems in a red wine fermentation is known as what?",
+            options: ["Cold soaking", "Whole bunch fermentation", "Pump over", "Carbonic maceration"],
+            correctAnswer: "Whole bunch fermentation",
+            explanation: "Whole bunch (or whole cluster) fermentation is the technique of including a percentage of intact grape clusters, with stems, in the fermenter to add aromatic complexity and structure.",
+            subjectType: "grape",
+            subjectName: "Winemaking Techniques"
+        },
+        {
+            question: "Which grape variety is the most planted in the Wairarapa region?",
+            options: ["Sauvignon Blanc", "Chardonnay", "Pinot Noir", "Pinot Gris"],
+            correctAnswer: "Pinot Noir",
+            explanation: "The Wairarapa, and particularly its sub-region Martinborough, is world-renowned for Pinot Noir, which accounts for nearly half of its plantings.",
+            subjectType: "grape",
+            subjectName: "Pinot Noir"
+        }
+    ],
+    law: [
+        {
+            question: "What is the minimum percentage required for a wine to be labeled with a specific grape variety, vintage, or GI in New Zealand?",
+            options: ["75%", "85%", "95%", "100%"],
+            correctAnswer: "85%",
+            explanation: "New Zealand adheres to the widely accepted '85% rule'. For a label to state a variety, vintage, or GI, at least 85% of the wine must be from that stated component.",
+            subjectType: "law",
+            subjectName: "New Zealand Wine Law"
+        },
+        {
+            question: "What is the name of the primary legislation that governs wine production, safety, and export standards in New Zealand?",
+            options: ["The Appellation Act 1995", "The Wine Standards Act 2001", "The Wine Act 2003", "The GI Registration Act 2017"],
+            correctAnswer: "The Wine Act 2003",
+            explanation: "The Wine Act 2003 is the main piece of legislation. It focuses on food safety, truth-in-labeling, and export standards, rather than dictating wine styles.",
+            subjectType: "law",
+            subjectName: "Wine Act 2003"
+        },
+        {
+            question: "What does the term 'Reserve' on a New Zealand wine label legally signify?",
+            options: ["The wine is aged for a minimum of 2 years", "The wine is from the winery's best vineyard", "The wine has a higher alcohol content", "It has no legal definition or requirement"],
+            correctAnswer: "It has no legal definition or requirement",
+            explanation: "Terms like 'Reserve', 'Private Bin', or 'Cellar Selection' have no legal definition in New Zealand. Their meaning is determined by the individual producer's own standards.",
+            subjectType: "law",
+            subjectName: "Wine Labeling Terms"
+        },
+        {
+            question: "The New Zealand GI system is best described as:",
+            options: ["A hierarchical system ranking vineyards by quality", "A prescriptive system dictating grapes and yields", "A system that legally defines and protects geographical place names", "A system based on mandatory aging requirements"],
+            correctAnswer: "A system that legally defines and protects geographical place names",
+            explanation: "The NZ GI system is non-hierarchical and non-prescriptive. Its sole legal function is to define the geographical boundaries of a region to guarantee origin.",
+            subjectType: "law",
+            subjectName: "Geographical Indications (GI)"
+        },
+        {
+            question: "The addition of sugar to grape must to increase the final alcohol level is known as what, and is it legal in New Zealand?",
+            options: ["Acidification, and it is illegal", "Chaptalization, and it is illegal", "Fortification, and it is legal", "Chaptalization, and it is legal"],
+            correctAnswer: "Chaptalization, and it is legal",
+            explanation: "Chaptalization is the addition of sugar to must to boost potential alcohol. It is legally permitted in New Zealand as a corrective measure in cool vintages, but it is not a routine practice.",
+            subjectType: "law",
+            subjectName: "Winemaking Techniques"
+        },
+        {
+            question: "The Gimblett Gravels sub-region is unique because its boundaries are defined by a specific soil type and its name is protected by what?",
+            options: ["GI Law", "A Royal Decree", "Trademark Law", "An Act of Parliament"],
+            correctAnswer: "Trademark Law",
+            explanation: "Gimblett Gravels is not a separate GI. Its name is a registered trademark of the local growers' association, and its use is restricted to members who follow specific rules, including using 95% grapes from the defined soil area.",
+            subjectType: "place",
+            subjectName: "Gimblett Gravels"
+        },
+        {
+            question: "What is SWNZ?",
+            options: ["A government agency that regulates wine prices", "A winemaking school in the South Island", "An industry-wide sustainability certification program", "A union for vineyard workers"],
+            correctAnswer: "An industry-wide sustainability certification program",
+            explanation: "SWNZ (Sustainable Winegrowing New Zealand) is the pioneering, industry-wide sustainability program. Over 98% of NZ's vineyard area is certified under its environmental, social, and economic standards.",
+            subjectType: "law",
+            subjectName: "Sustainable Winegrowing New Zealand (SWNZ)"
+        },
+        {
+            question: "When did the Geographical Indications (GI) Act, which provides the legal basis for the GI system, fully come into force?",
+            options: ["1985", "1997", "2006", "2017"],
+            correctAnswer: "2017",
+            explanation: "Although the Act was passed in 2006, it did not fully come into force until 2017, with the first major GIs being officially registered in 2018.",
+            subjectType: "law",
+            subjectName: "Geographical Indications (GI)"
+        },
+        {
+            question: "What is a WSMP, which all commercial wineries in New Zealand must operate under?",
+            options: ["Wine Style Management Protocol", "Winery Safety & Measurement Plan", "Wine Standards Management Plan", "Winery & Spirit Marketing Program"],
+            correctAnswer: "Wine Standards Management Plan",
+            explanation: "A WSMP is a mandatory plan registered with the government that outlines a winery's procedures for ensuring wine safety, traceability, and legal compliance.",
+            subjectType: "law",
+            subjectName: "Wine Standards Management Plan (WSMP)"
+        },
+        {
+            question: "What percentage of New Zealand wine is estimated to be bottled under screwcap?",
+            options: ["Around 50%", "Around 75%", "Over 90%", "Less than 40%"],
+            correctAnswer: "Over 90%",
+            explanation: "Following the New Zealand Screwcap Wine Seal Initiative in 2001, the industry rapidly adopted the closure to combat cork taint. Today, over 90% of NZ wine is sealed with a screwcap.",
+            subjectType: "law",
+            subjectName: "Screwcap Initiative"
+        },
+        {
+            question: "Is irrigation legally permitted in New Zealand vineyards?",
+            options: ["Yes, without restriction", "Yes, but it is regulated by regional councils", "No, it is strictly forbidden", "Only for white grape varieties"],
+            correctAnswer: "Yes, but it is regulated by regional councils",
+            explanation: "Irrigation is legal and essential in many regions. Water use is managed under SWNZ guidelines and requires resource consents from regional councils.",
+            subjectType: "law",
+            subjectName: "Irrigation Laws"
+        },
+        {
+            question: "Which of these is NOT an official, registered Geographical Indication?",
+            options: ["Martinborough GI", "Waiheke Island GI", "Bannockburn GI", "Southern Valleys GI"],
+            correctAnswer: "Southern Valleys GI",
+            explanation: "The Southern Valleys are a well-known sub-region of Marlborough, but they do not have their own separate GI registration. Martinborough, Waiheke Island, and Bannockburn are all official GIs.",
+            subjectType: "law",
+            subjectName: "Geographical Indications (GI)"
+        },
+        {
+            question: "The organization 'Appellation Marlborough Wine' (AMW) has a stricter rule for grape origin than the national GI law. What is it?",
+            options: ["90% Marlborough grapes", "95% Marlborough grapes", "100% Marlborough grapes", "85% Marlborough grapes, but only from the Wairau Valley"],
+            correctAnswer: "100% Marlborough grapes",
+            explanation: "To carry the AMW logo, a wine must be made from 100% Marlborough grapes, exceeding the national GI law's 85% minimum.",
+            subjectType: "law",
+            subjectName: "Appellation Marlborough Wine (AMW)"
+        },
+        {
+            question: "What is the legal status of minimum alcohol levels for specific wine styles in New Zealand?",
+            options: ["All red wines must be over 12.5% ABV", "All white wines must be under 13% ABV", "There are no legally mandated minimum alcohol levels", "Minimum levels are set annually by New Zealand Winegrowers"],
+            correctAnswer: "There are no legally mandated minimum alcohol levels",
+            explanation: "New Zealand wine law does not prescribe minimum or maximum alcohol levels for its wines. This is left to the discretion of the producer.",
+            subjectType: "law",
+            subjectName: "New Zealand Wine Law"
+        },
+        {
+            question: "Which government body manages the official register of Geographical Indications in New Zealand?",
+            options: ["Ministry for Primary Industries (MPI)", "New Zealand Winegrowers (NZW)", "Intellectual Property Office of New Zealand (IPONZ)", "The Ministry of Foreign Affairs and Trade"],
+            correctAnswer: "Intellectual Property Office of New Zealand (IPONZ)",
+            explanation: "IPONZ is the government agency responsible for administering the GI register, handling applications and maintaining the official list of protected regional names.",
+            subjectType: "law",
+            subjectName: "Geographical Indications (GI)"
+        },
+        {
+            question: "The Te Mata Special Character Zone, established in 1996, was significant because it was:",
+            options: ["New Zealand's largest vineyard area", "New Zealand's first certified organic region", "New Zealand's first legally defined wine-growing area", "A zone exclusively for growing Syrah"],
+            correctAnswer: "New Zealand's first legally defined wine-growing area",
+            explanation: "The protection of the Te Mata Special Character Zone was a landmark event, representing the first time a specific viticultural terroir was legally defined and protected in New Zealand law.",
+            subjectType: "place",
+            subjectName: "Te Mata Peak"
+        },
+        {
+            question: "Are there any legally mandated aging requirements (e.g., Riserva, Gran Reserva) in New Zealand wine law?",
+            options: ["Yes, for all Pinot Noir", "Yes, for all Bordeaux blends", "No, there are no legal aging requirements", "Only for sparkling wines"],
+            correctAnswer: "No, there are no legal aging requirements",
+            explanation: "Unlike Spain or Italy, New Zealand has no legal classifications based on aging. Decisions on time in oak or bottle are entirely up to the producer.",
+            subjectType: "law",
+            subjectName: "New Zealand Wine Law"
+        },
+        {
+            question: "If a New Zealand wine label lists 'Merlot Cabernet Sauvignon', what does the law require regarding their proportions?",
+            options: ["They must be in equal 50/50 parts", "Merlot must be the dominant grape", "Cabernet Sauvignon must be the dominant grape", "They can be in any proportion"],
+            correctAnswer: "Merlot must be the dominant grape",
+            explanation: "When multiple varieties are listed, they must be in descending order of proportion. Therefore, Merlot must make up a greater or equal percentage of the blend than Cabernet Sauvignon.",
+            subjectType: "law",
+            subjectName: "Wine Labeling Laws"
+        },
+        {
+            question: "Which of these is a requirement for a wine to be certified by Appellation Marlborough Wine (AMW)?",
+            options: ["It must be aged in French oak", "It must be bottled in New Zealand", "It must be hand-harvested", "It must be over 13.5% alcohol"],
+            correctAnswer: "It must be bottled in New Zealand",
+            explanation: "AMW certification has several requirements beyond the base GI law, including being made from 100% Marlborough grapes and being bottled within New Zealand to ensure quality control.",
+            subjectType: "law",
+            subjectName: "Appellation Marlborough Wine (AMW)"
+        },
+        {
+            question: "What is the legal framework for the New Zealand wine quality pyramid?",
+            options: ["A four-tier system: Vino, IGT, DOC, DOCG", "A three-tier system: Regional, Premier Cru, Grand Cru", "A single, flat tier of Geographical Indications", "A system based on producer reputation, legally codified"],
+            correctAnswer: "A single, flat tier of Geographical Indications",
+            explanation: "New Zealand does not have a quality pyramid. The legal system consists of a single, non-hierarchical tier of GIs, where a large GI like 'South Island' has the same legal standing as a specific one like 'Bannockburn'.",
+            subjectType: "law",
+            subjectName: "Geographical Indications (GI)"
+        },
+        {
+            question: "What was the primary driver behind the 2001 New Zealand Screwcap Wine Seal Initiative?",
+            options: ["To reduce bottling costs", "A government mandate for sustainability", "An unacceptably high incidence of cork taint (TCA)", "A marketing campaign to appear more modern"],
+            correctAnswer: "An unacceptably high incidence of cork taint (TCA)",
+            explanation: "The initiative was a direct, industry-led response to the widespread problem of cork taint, which was spoiling a significant percentage of wines. It was a pragmatic decision to protect wine quality.",
+            subjectType: "law",
+            subjectName: "Screwcap Initiative"
+        },
+        {
+            question: "Is acidification (the addition of acid to must or wine) a common practice in New Zealand?",
+            options: ["Yes, it is routinely done for all red wines", "Yes, it is required by law for Sauvignon Blanc", "No, it is relatively uncommon due to the cool climate", "No, it is strictly illegal"],
+            correctAnswer: "No, it is relatively uncommon due to the cool climate",
+            explanation: "Acidification is legally permitted but not common. New Zealand's cool climate and long growing season mean that grapes are typically harvested with high levels of natural acidity.",
+            subjectType: "law",
+            subjectName: "Winemaking Techniques"
+        },
+        {
+            question: "Which of these is NOT an 'enduring' GI in the New Zealand system?",
+            options: ["North Island", "South Island", "New Zealand", "Marlborough"],
+            correctAnswer: "Marlborough",
+            explanation: "'North Island', 'South Island', and 'New Zealand' are foundational, 'enduring' GIs. Marlborough is a registered regional GI with a specific registration date.",
+            subjectType: "law",
+            subjectName: "Geographical Indications (GI)"
+        },
+        {
+            question: "Are there any laws in New Zealand dictating permitted grape varieties within a specific GI?",
+            options: ["Yes, Marlborough can only grow Sauvignon Blanc and Pinot Noir", "Yes, Hawke's Bay has a list of permitted red varieties", "No, producers are free to plant any variety they choose", "Only for the Gimblett Gravels sub-region"],
+            correctAnswer: "No, producers are free to plant any variety they choose",
+            explanation: "The New Zealand GI system is non-prescriptive. Unlike many Old World appellations, there are no laws restricting which grape varieties can be grown within a GI.",
+            subjectType: "law",
+            subjectName: "New Zealand Wine Law"
+        },
+        {
+            question: "What was a major economic catalyst for the 'modern quality revolution' in the mid-1980s?",
+            options: ["A government subsidy for planting new vineyards", "The removal of protective tariffs and increased competition", "A sudden surge in domestic wine consumption", "The invention of the screwcap"],
+            correctAnswer: "The removal of protective tariffs and increased competition",
+            explanation: "In 1985, the government began dismantling protective tariffs, allowing Australian wines to compete. This forced NZ producers to focus on quality and exports to survive.",
+            subjectType: "law",
+            subjectName: "New Zealand Wine History"
+        },
+        {
+            question: "What is the legal status of vineyard yields (e.g., maximum tonnes per hectare) in New Zealand?",
+            options: ["They are strictly limited by GI law", "They are set each year by NZ Winegrowers", "There are no legal requirements for yields", "They are limited only for red grape varieties"],
+            correctAnswer: "There are no legal requirements for yields",
+            explanation: "Yields are not legally regulated. Decisions on crop levels are left to the producer and are dictated by their desired wine style and quality goals.",
+            subjectType: "law",
+            subjectName: "New Zealand Wine Law"
+        },
+        {
+            question: "Which of these is a local GI located within the Wairarapa GI?",
+            options: ["Bannockburn", "Waipara Valley", "Kumeu", "Gladstone"],
+            correctAnswer: "Gladstone",
+            explanation: "Gladstone and Martinborough are both registered local GIs located within the larger Wairarapa regional GI.",
+            subjectType: "law",
+            subjectName: "Wairarapa GI"
+        },
+        {
+            question: "What does the Māori concept of 'Kaitiakitanga', widely adopted by the wine industry, mean?",
+            options: ["Long-term aging potential", "Guardianship and stewardship of the environment", "A specific method of vine pruning", "A toast meaning 'good health'"],
+            correctAnswer: "Guardianship and stewardship of the environment",
+            explanation: "Kaitiakitanga refers to guardianship and protection of the natural environment. It is a core principle of the SWNZ program and reflects a deep commitment to sustainability.",
+            subjectType: "law",
+            subjectName: "Kaitiakitanga"
+        },
+        {
+            question: "Which of these is NOT a registered local GI within the Auckland GI?",
+            options: ["Matakana", "Kumeu", "Waiheke Island", "Henderson"],
+            correctAnswer: "Henderson",
+            explanation: "Henderson is a historic area in West Auckland but is not a registered GI. Matakana, Kumeu, and Waiheke Island are all official local GIs within the Auckland GI.",
+            subjectType: "law",
+            subjectName: "Auckland GI"
+        },
+        {
+            question: "The New Zealand GI system is best described as being a 'market-driven' approach. What does this mean?",
+            options: ["Wine prices are set by the government", "The GIs were created to protect regional identities the market already valued", "Only wines that sell well can use a GI", "Marketing is more important than terroir"],
+            correctAnswer: "The GIs were created to protect regional identities the market already valued",
+            explanation: "The GI system was established long after regions like Marlborough had a global reputation. It was created to legally codify and protect the regional identities that the market had already recognized and established.",
+            subjectType: "law",
+            subjectName: "Geographical Indications (GI)"
+        }
+    ],
+    gastronomy: [
+        {
+            question: "What is Hāngī, the traditional Māori method of cooking?",
+            options: ["Grilling seafood over an open fire", "Slow-steaming meat and vegetables in a pit oven", "Curing fish with salt and herbs", "Boiling root vegetables in a clay pot"],
+            correctAnswer: "Slow-steaming meat and vegetables in a pit oven",
+            explanation: "Hāngī is a traditional Māori cooking method where food, typically pork, chicken, and root vegetables like kūmara, is slow-cooked in an earth oven, giving it a smoky, earthy flavor.",
+            subjectType: "dish",
+            subjectName: "Hāngī"
+        },
+        {
+            question: "Which wine is considered the classic, quintessential pairing for New Zealand's native Green-Lipped Mussels?",
+            options: ["Hawke's Bay Chardonnay", "Central Otago Pinot Noir", "Marlborough Sauvignon Blanc", "Canterbury Riesling"],
+            correctAnswer: "Marlborough Sauvignon Blanc",
+            explanation: "The pairing of fresh, steamed Green-Lipped Mussels with a crisp, herbaceous Marlborough Sauvignon Blanc is considered one of the world's great synergistic food and wine matches.",
+            subjectType: "wine_pairing",
+            subjectName: "Green-Lipped Mussels"
+        },
+        {
+            question: "Bluff Oysters, a prized seasonal delicacy, are harvested from the cold waters of which strait?",
+            options: ["Cook Strait", "Foveaux Strait", "Hauraki Gulf", "Tasman Bay"],
+            correctAnswer: "Foveaux Strait",
+            explanation: "Bluff Oysters are harvested from the Foveaux Strait, at the very bottom of the South Island, and are known for their intense, briny flavor.",
+            subjectType: "dish",
+            subjectName: "Bluff Oysters"
+        },
+        {
+            question: "What is the most iconic non-alcoholic beverage in New Zealand, originating from the town of Paeroa?",
+            options: ["Kiwifruit Juice", "Manuka Honey Tea", "L&P (Lemon & Paeroa)", "Ginger Beer"],
+            correctAnswer: "L&P (Lemon & Paeroa)",
+            explanation: "L&P is a beloved national institution, a sweet, lemon-flavored soft drink that is famously 'World Famous in New Zealand'.",
+            subjectType: "ingredient",
+            subjectName: "L&P (Lemon & Paeroa)"
+        },
+        {
+            question: "Which two native botanicals are commonly used to give New Zealand craft gins a distinctive local flavor?",
+            options: ["Pohutukawa and Kauri", "Fern and Flax", "Horopito and Kawakawa", "Manuka and Rata"],
+            correctAnswer: "Horopito and Kawakawa",
+            explanation: "Craft distillers often use native botanicals like Horopito (a native pepper tree) and Kawakawa leaves to impart unique spicy, citrusy, and peppery notes to their gins.",
+            subjectType: "spirit",
+            subjectName: "New Zealand Gin"
+        },
+        {
+            question: "A classic roast leg of New Zealand lamb is a quintessential match for which style of wine?",
+            options: ["Marlborough Sauvignon Blanc", "Dry Riesling", "A structured Hawke's Bay Bordeaux blend", "Late-harvest Gewürztraminer"],
+            correctAnswer: "A structured Hawke's Bay Bordeaux blend",
+            explanation: "The rich, savory character of roast lamb pairs perfectly with a structured, full-bodied red wine like a Cabernet-Merlot blend from Hawke's Bay or a mature Pinot Noir.",
+            subjectType: "wine_pairing",
+            subjectName: "Roast Lamb"
+        },
+        {
+            question: "What is Kūmara?",
+            options: ["A type of local fish", "A native green vegetable", "The Māori name for sweet potato", "A traditional meat pie"],
+            correctAnswer: "The Māori name for sweet potato",
+            explanation: "Kūmara is the Māori name for sweet potato, a key root vegetable in New Zealand cuisine and a staple ingredient in a traditional Hāngī.",
+            subjectType: "ingredient",
+            subjectName: "Kūmara"
+        },
+        {
+            question: "The New Zealand craft beer scene is famous for developing unique hop varieties. Which hop is known for its intense Sauvignon Blanc-like aromas?",
+            options: ["Cascade", "Fuggle", "Saaz", "Nelson Sauvin"],
+            correctAnswer: "Nelson Sauvin",
+            explanation: "The Nelson Sauvin hop is sought after by brewers worldwide for its intensely aromatic profile, often described as having notes of crushed gooseberry and tropical fruit, similar to Marlborough Sauvignon Blanc.",
+            subjectType: "ingredient",
+            subjectName: "Nelson Sauvin Hops"
+        },
+        {
+            question: "Pavlova, a cherished dessert in New Zealand, is an excellent partner for which type of wine?",
+            options: ["Dry Chardonnay", "Full-bodied Syrah", "A luscious, high-acid late-harvest Riesling", "Oaked Sauvignon Blanc"],
+            correctAnswer: "A luscious, high-acid late-harvest Riesling",
+            explanation: "The sweetness of the meringue and fruit in a Pavlova is balanced by the concentrated sweetness and high acidity of a late-harvest Riesling.",
+            subjectType: "wine_pairing",
+            subjectName: "Pavlova"
+        },
+        {
+            question: "Which of these is a famous New Zealand artisan cheesemaker?",
+            options: ["Fonterra", "Anchor", "Whitestone", "Mainland"],
+            correctAnswer: "Whitestone",
+            explanation: "Whitestone, based in Oamaru, is a renowned artisan cheesemaker, part of New Zealand's high-quality dairy industry. Fonterra, Anchor, and Mainland are large-scale dairy brands.",
+            subjectType: "ingredient",
+            subjectName: "New Zealand Cheese"
+        },
+        {
+            question: "Which of these is NOT a key local ingredient in New Zealand's gastronomy?",
+            options: ["Green-Lipped Mussels", "Kiwifruit", "Lamb", "Jamón Ibérico"],
+            correctAnswer: "Jamón Ibérico",
+            explanation: "Jamón Ibérico is a famous cured ham from Spain. Green-Lipped Mussels, Kiwifruit, and Lamb are all iconic New Zealand products.",
+            subjectType: "ingredient",
+            subjectName: "New Zealand Cuisine"
+        },
+        {
+            question: "A bone-dry Riesling from Canterbury would be a perfect pairing for which of these dishes?",
+            options: ["Roast Lamb", "Hāngī", "Bluff Oysters", "Pavlova"],
+            correctAnswer: "Bluff Oysters",
+            explanation: "The intense salinity and minerality of raw Bluff Oysters are perfectly complemented by the crisp, high acidity and minerality of a dry Canterbury Riesling.",
+            subjectType: "wine_pairing",
+            subjectName: "Bluff Oysters"
+        },
+        {
+            question: "Which major New Zealand city is home to the influential craft brewery Garage Project?",
+            options: ["Auckland", "Christchurch", "Wellington", "Dunedin"],
+            correctAnswer: "Wellington",
+            explanation: "Garage Project, one of New Zealand's most innovative and well-known craft breweries, is based in the capital city of Wellington.",
+            subjectType: "ingredient",
+            subjectName: "New Zealand Craft Beer"
+        },
+        {
+            question: "The aromatic synergy between NZ hops and Sauvignon Blanc is due to shared compounds that create what kind of aromas?",
+            options: ["Smoky and earthy", "Spicy and peppery", "Floral and honeyed", "Tropical fruit and grapefruit"],
+            correctAnswer: "Tropical fruit and grapefruit",
+            explanation: "Hops like Nelson Sauvin and Riwaka share aromatic profiles with Marlborough Sauvignon Blanc, evoking notes of passionfruit, grapefruit, and other tropical fruits.",
+            subjectType: "ingredient",
+            subjectName: "New Zealand Hops"
+        },
+        {
+            question: "A textural, full-bodied Chardonnay would be a suitable pairing for which traditional dish?",
+            options: ["Bluff Oysters", "Green-Lipped Mussels", "Hāngī", "Pavlova"],
+            correctAnswer: "Hāngī",
+            explanation: "The smoky, earthy flavors and tender texture of the meat and vegetables in a Hāngī can pair beautifully with a richer, textural Chardonnay, alongside Pinot Noir.",
+            subjectType: "wine_pairing",
+            subjectName: "Hāngī"
+        },
+        {
+            question: "What is the defining characteristic of the Green-Lipped Mussel's appearance?",
+            options: ["Its small size", "Its bright blue shell", "Its distinctive green-edged shell", "Its round shape"],
+            correctAnswer: "Its distinctive green-edged shell",
+            explanation: "This native New Zealand mussel is named for the characteristic green coloration on the edge, or 'lip', of its shell.",
+            subjectType: "ingredient",
+            subjectName: "Green-Lipped Mussels"
+        },
+        {
+            question: "Which of these is NOT a notable New Zealand craft gin distillery?",
+            options: ["Scapegrace Distilling Co.", "Broken Heart Spirits", "Coromandel Distilling Company", "42 Below"],
+            correctAnswer: "42 Below",
+            explanation: "42 Below is a famous New Zealand vodka brand. Scapegrace, Broken Heart, and Coromandel are all acclaimed craft gin producers.",
+            subjectType: "spirit",
+            subjectName: "New Zealand Gin"
+        },
+        {
+            question: "What is the general style of Rosé produced in New Zealand?",
+            options: ["Sweet and sparkling", "Deeply colored and tannic", "Dry, fresh, and fruit-forward", "Oxidative and nutty"],
+            correctAnswer: "Dry, fresh, and fruit-forward",
+            explanation: "New Zealand Rosé is typically made in a modern, dry style, emphasizing fresh red berry fruit and crisp acidity, designed for early consumption.",
+            subjectType: "wine",
+            subjectName: "New Zealand Rosé"
+        },
+        {
+            question: "Which grape is typically used for Rosé production in the cooler South Island?",
+            options: ["Merlot", "Cabernet Sauvignon", "Syrah", "Pinot Noir"],
+            correctAnswer: "Pinot Noir",
+            explanation: "In the cooler South Island regions like Marlborough and Central Otago, Pinot Noir is the grape of choice for producing elegant Rosé with delicate red berry and floral notes.",
+            subjectType: "wine",
+            subjectName: "New Zealand Rosé"
+        },
+        {
+            question: "What does the 'paddock-to-plate' ethos in New Zealand cuisine emphasize?",
+            options: ["Imported luxury ingredients", "Complex, multi-stage recipes", "Fresh, high-quality local produce", "A focus on vegetarian dishes"],
+            correctAnswer: "Fresh, high-quality local produce",
+            explanation: "The 'paddock-to-plate' (or farm-to-table) philosophy is central to modern New Zealand gastronomy, emphasizing the use of fresh, seasonal, and locally sourced ingredients from both land and sea.",
+            subjectType: "dish",
+            subjectName: "New Zealand Cuisine"
+        }
+    ],
+    critic: [
+        {
+            question: "Which producer's 1985 Sauvignon Blanc is credited with irrevocably placing New Zealand on the global fine wine map?",
+            options: ["Brancott Estate (Montana)", "Cloudy Bay", "Villa Maria", "Hunter's"],
+            correctAnswer: "Cloudy Bay",
+            explanation: "While Montana pioneered the region, it was the explosive international success of Cloudy Bay's 1985 Sauvignon Blanc that became an icon and cemented Marlborough's global reputation.",
+            subjectType: "producer",
+            subjectName: "Cloudy Bay"
+        },
+        {
+            question: "Kumeu River, located in the Auckland GI, is considered a world-class benchmark producer of which grape variety?",
+            options: ["Pinot Noir", "Syrah", "Chardonnay", "Sauvignon Blanc"],
+            correctAnswer: "Chardonnay",
+            explanation: "Kumeu River is internationally acclaimed for its Chardonnay, which is consistently compared to top white Burgundy and is considered the benchmark for the variety in New Zealand.",
+            subjectType: "producer",
+            subjectName: "Kumeu River"
+        },
+        {
+            question: "What is the name of Te Mata Estate's iconic, flagship Bordeaux-style blend?",
+            options: ["Sophia", "Homage", "Larose", "Coleraine"],
+            correctAnswer: "Coleraine",
+            explanation: "Coleraine is the flagship Cabernet-based blend from Te Mata Estate in Hawke's Bay and is widely regarded as one of New Zealand's greatest and most age-worthy red wines.",
+            subjectType: "wine",
+            subjectName: "Te Mata Estate Coleraine"
+        },
+        {
+            question: "The 2020 vintage in New Zealand is widely regarded by critics as a 'vintage of a lifetime' due to what conditions?",
+            options: ["A cool, wet season leading to high acidity", "A perfect, dry, and stable growing season", "A very large harvest with diluted flavors", "A late harvest that was saved by frost"],
+            correctAnswer: "A perfect, dry, and stable growing season",
+            explanation: "The 2020 vintage experienced a perfect, dry, and stable growing season across the country, resulting in wines of exceptional ripeness, concentration, and balance.",
+            subjectType: "vintage",
+            subjectName: "2020 Vintage"
+        },
+        {
+            question: "Felton Road, Rippon, and Burn Cottage are all iconic, benchmark producers in which region?",
+            options: ["Martinborough", "Marlborough", "Canterbury", "Central Otago"],
+            correctAnswer: "Central Otago",
+            explanation: "Felton Road, Rippon, and Burn Cottage are three of the most critically acclaimed producers in Central Otago, known for their world-class Pinot Noir.",
+            subjectType: "producer",
+            subjectName: "Felton Road"
+        },
+        {
+            question: "Which vintage was devastated in the North Island by Cyclone Gabrielle but was excellent in the South Island?",
+            options: ["2021", "2022", "2023", "2024"],
+            correctAnswer: "2023",
+            explanation: "The 2023 vintage was a tale of two islands: Cyclone Gabrielle caused widespread crop loss in Hawke's Bay and Gisborne, while the South Island enjoyed a superb, dry season.",
+            subjectType: "vintage",
+            subjectName: "2023 Vintage"
+        },
+        {
+            question: "Ata Rangi and Dry River are pioneering, iconic producers in which sub-region, famous for structured, savory Pinot Noir?",
+            options: ["Bannockburn", "Gibbston", "Martinborough", "Waipara Valley"],
+            correctAnswer: "Martinborough",
+            explanation: "Ata Rangi and Dry River were among the original pioneers of Martinborough in the Wairarapa, establishing the region's reputation for world-class, age-worthy Pinot Noir.",
+            subjectType: "producer",
+            subjectName: "Ata Rangi"
+        },
+        {
+            question: "Which producer is the undisputed benchmark for Chardonnay in the Nelson region?",
+            options: ["Seifried Estate", "Greenhough", "Neudorf Vineyards", "Cloudy Bay"],
+            correctAnswer: "Neudorf Vineyards",
+            explanation: "Neudorf Vineyards, particularly their Moutere Chardonnay, is consistently ranked among New Zealand's greatest white wines and is the benchmark producer for Nelson.",
+            subjectType: "producer",
+            subjectName: "Neudorf Vineyards"
+        },
+        {
+            question: "The 'Le Sol' Syrah and 'Sophia' Merlot-based blend are flagship wines from which acclaimed Hawke's Bay producer?",
+            options: ["Trinity Hill", "Te Mata Estate", "Craggy Range", "Mission Estate"],
+            correctAnswer: "Craggy Range",
+            explanation: "'Le Sol' (Syrah) and 'Sophia' (Merlot blend) are two of the top single-vineyard cuvées from Craggy Range, sourced from their Gimblett Gravels vineyards.",
+            subjectType: "producer",
+            subjectName: "Craggy Range"
+        },
+        {
+            question: "Bell Hill and Pegasus Bay are two of the most critically acclaimed producers in which region?",
+            options: ["Marlborough", "Central Otago", "Canterbury", "Nelson"],
+            correctAnswer: "Canterbury",
+            explanation: "Pegasus Bay (Waipara Valley) and the cult producer Bell Hill (Waikari) are benchmark estates for the Canterbury region, known for Riesling and Pinot Noir.",
+            subjectType: "producer",
+            subjectName: "Pegasus Bay"
+        },
+        {
+            question: "Which producer, founded by winemaker Kevin Judd after he left Cloudy Bay, is known for its 'Wild Sauvignon'?",
+            options: ["Dog Point Vineyard", "Greywacke", "Saint Clair", "Fromm"],
+            correctAnswer: "Greywacke",
+            explanation: "Kevin Judd, the founding winemaker at Cloudy Bay, started his own label, Greywacke, in 2009. His 'Wild Sauvignon' is a famous barrel-fermented style.",
+            subjectType: "producer",
+            subjectName: "Greywacke"
+        },
+        {
+            question: "The 2013 vintage is considered particularly spectacular for which region and wine style?",
+            options: ["Marlborough Sauvignon Blanc", "Central Otago Pinot Noir", "North Island red wines (Hawke's Bay)", "Canterbury Riesling"],
+            correctAnswer: "North Island red wines (Hawke's Bay)",
+            explanation: "The 2013 vintage was exceptionally hot and dry in the North Island, producing powerful and historically great red wines, especially Syrah and Bordeaux blends, in Hawke's Bay.",
+            subjectType: "vintage",
+            subjectName: "2013 Vintage"
+        },
+        {
+            question: "Stonyridge 'Larose' is an iconic, cult Bordeaux-style blend from which boutique region?",
+            options: ["Martinborough", "Waiheke Island", "Matakana", "Bendigo"],
+            correctAnswer: "Waiheke Island",
+            explanation: "Stonyridge 'Larose' is one of New Zealand's original cult red wines, a Cabernet-dominant blend from Waiheke Island.",
+            subjectType: "wine",
+            subjectName: "Stonyridge Larose"
+        },
+        {
+            question: "Which of these producers is considered a 'Value Champion', consistently offering outstanding quality for the price?",
+            options: ["Felton Road", "Bell Hill", "Saint Clair Family Estate", "Dry River"],
+            correctAnswer: "Saint Clair Family Estate",
+            explanation: "Saint Clair is known for consistently delivering high quality across its various tiers, including its widely available and excellent value ranges.",
+            subjectType: "producer",
+            subjectName: "Saint Clair Family Estate"
+        },
+        {
+            question: "The 2012 vintage is generally described by critics as:",
+            options: ["Hot and powerful", "A large, dilute vintage", "A classic, balanced year", "A very cool and difficult vintage"],
+            correctAnswer: "A very cool and difficult vintage",
+            explanation: "2012 was a very cool and challenging vintage across New Zealand, with low yields and difficulties in achieving ripeness, resulting in lighter, high-acid wines.",
+            subjectType: "vintage",
+            subjectName: "2012 Vintage"
+        },
+        {
+            question: "Which producer was New Zealand's first certified organic and biodynamic winery?",
+            options: ["Felton Road", "Rippon", "Millton Vineyards", "Pyramid Valley"],
+            correctAnswer: "Millton Vineyards",
+            explanation: "Millton Vineyards in Gisborne, founded by James and Annie Millton, was a pioneer in sustainable practices, becoming New Zealand's first certified organic and biodynamic estate.",
+            subjectType: "producer",
+            subjectName: "Millton Vineyards"
+        },
+        {
+            question: "Dog Point Vineyard is a highly regarded Marlborough producer founded by former senior staff from which iconic winery?",
+            options: ["Villa Maria", "Brancott Estate", "Cloudy Bay", "Hunter's"],
+            correctAnswer: "Cloudy Bay",
+            explanation: "Dog Point Vineyard was established by Ivan Sutherland and James Healy, who were the former viticulturist and winemaker, respectively, at Cloudy Bay.",
+            subjectType: "producer",
+            subjectName: "Dog Point Vineyard"
+        },
+        {
+            question: "A recurring theme in advanced criticism of New Zealand wine is the challenge of overcoming the global perception of its Sauvignon Blanc as what?",
+            options: ["Too expensive and rare", "A simple, fast-moving consumer good", "Too oaky and heavy", "Inconsistent from vintage to vintage"],
+            correctAnswer: "A simple, fast-moving consumer good",
+            explanation: "Critics note that the immense commercial success of entry-level Sauvignon Blanc can overshadow the country's serious fine wine credentials and the complexity of its other top wines.",
+            subjectType: "wine",
+            subjectName: "New Zealand Sauvignon Blanc"
+        },
+        {
+            question: "Which vintage was dramatically smaller than average due to cool spring weather and frost, leading to supply constraints but high concentration?",
+            options: ["2018", "2020", "2021", "2022"],
+            correctAnswer: "2021",
+            explanation: "The 2021 vintage had a significantly reduced harvest due to poor weather during flowering and spring frosts. The resulting low yields produced wines of excellent concentration and intensity.",
+            subjectType: "vintage",
+            subjectName: "2021 Vintage"
+        },
+        {
+            question: "Trinity Hill's flagship Syrah, 'Homage', was inspired by the winemaker's time working at which famous Northern Rhône estate?",
+            options: ["Guigal", "Jaboulet", "Chapoutier", "Clape"],
+            correctAnswer: "Jaboulet",
+            explanation: "Trinity Hill's founder John Hancock was inspired to create Homage after working a harvest at Jaboulet, and the wine is a tribute to the late Gerard Jaboulet.",
+            subjectType: "wine",
+            subjectName: "Trinity Hill Homage"
+        }
+    ],
+    flashcards: {
+        historian: [
+            { front: "Key Figure: Reverend Samuel Marsden", back: "An English missionary who planted the first documented grapevines in New Zealand at Kerikeri, Northland, in 1819." },
+            { front: "Key Figure: James Busby", back: "The first British Resident in NZ, credited with producing the country's first wine at Waitangi in the 1830s." },
+            { front: "Key Figure: Dumont d’Urville", back: "A French naval officer who sampled and praised James Busby's 'light white wine' in 1840, providing the first tasting note of NZ wine." },
+            { front: "Key Figure: Dalmatian Immigrants", back: "A highly influential group from modern-day Croatia who established the wine industry in West Auckland in the early 20th century. Key families include Babich, Fistonich (Villa Maria), and Brajkovich (Kumeu River)." },
+            { front: "Key Figure: Romeo Bragato", back: "A viticultural expert who toured NZ in 1895 and wrote a report identifying key regions like Hawke's Bay and Wairarapa as highly suitable for viticulture, and recommended planting Pinot Noir." },
+            { front: "Key Figure: Tom McDonald", back: "A pioneering winemaker at McWilliams (now Church Road) in Hawke's Bay who produced benchmark Cabernet Sauvignon (1965) and Chardonnay (1967), proving NZ's fine wine potential." },
+            { front: "Key Figure: Ross Spence", back: "Founder of Matua Valley who planted the first commercial Sauvignon Blanc in Auckland and released the first labeled bottle in 1974." },
+            { front: "Key Figure: Frank Yukich", back: "A director of Montana (now Brancott Estate) who made the bold, board-unapproved decision to purchase 1,200 hectares in Marlborough in 1973, effectively founding the region." },
+            { front: "Key Figure: Alan Brady", back: "A pioneer of Central Otago who established Gibbston Valley Wines, releasing one of the region's first commercial Pinot Noirs in 1987." },
+            { front: "Key Figure: Rolfe Mills", back: "A pioneer of Central Otago who established Rippon, releasing one of the region's first commercial Pinot Noirs in 1987." },
+            { front: "Key Event: First Vine Planting", back: "1819: Reverend Samuel Marsden plants vines at Kerikeri, Northland." },
+            { front: "Key Event: First Recorded Wine", back: "1840: James Busby's wine is tasted at Waitangi." },
+            { front: "Key Event: Mission Estate Founded", back: "1851: French Marist missionaries establish what is now New Zealand's oldest winery in Hawke's Bay." },
+            { front: "Key Event: Prohibition Vote", back: "1919: A national vote on prohibition fails, narrowly saving the fledgling wine industry." },
+            { front: "Key Event: Restrictive Laws", back: "Until the 1950s/60s, laws like 6 p.m. pub closing, no wine in restaurants, and minimum two-gallon sales severely stifled the industry." },
+            { front: "Key Event: Montana's Marlborough Purchase", back: "1973: A landmark moment when Montana established the first commercial vineyards in Marlborough, a region previously thought too cold." },
+            { front: "Key Event: First Commercial Sauvignon Blanc", back: "1974: Matua Valley releases the first commercial NZ Sauvignon Blanc from Auckland-grown grapes." },
+            { front: "Key Event: First Marlborough Sauvignon Blanc", back: "1979: Montana releases the first commercial Sauvignon Blanc from Marlborough-grown grapes." },
+            { front: "Key Event: Cloudy Bay's Inaugural Vintage", back: "1985: The release of Cloudy Bay's first Sauvignon Blanc, which achieved massive international success and put NZ wine on the world map." },
+            { front: "Key Event: Government Vine Pull", back: "1986: A government-sponsored scheme removed about 25% of the nation's vines, mostly low-quality hybrids, paving the way for replanting with classic varieties." },
+            { front: "Key Event: Screwcap Initiative", back: "2001: A producer-led movement to adopt screwcaps to combat high rates of cork taint (TCA). Over 90% of NZ wine is now under screwcap." },
+            { front: "Key Event: GI Act Passed", back: "2006: The Geographical Indications (Wine and Spirits) Registration Act is passed by Parliament, creating the legal framework for GIs." },
+            { front: "Key Event: GI System Implemented", back: "2017: The GI Act fully comes into force, and the first major regional GIs are officially registered in 2018." },
+            { front: "Key Concept: Temperance Movement", back: "A powerful social movement in the late 19th and early 20th centuries that advocated for the prohibition of alcohol and led to restrictive licensing laws that hampered the wine industry for decades." },
+            { front: "Key Concept: The 'Modern Quality Revolution'", back: "A period from the 1960s-1980s marked by a shift from fortified wines/hybrids to dry table wines from classic Vitis vinifera varieties, driven by pioneers and changing consumer tastes." },
+            { front: "Key Concept: Economic Deregulation", back: "The removal of protective tariffs in the mid-1980s, which exposed the domestic industry to competition (especially from Australia) and forced a focus on quality and exports for survival." }
+        ],
+        terroir: [
+            { front: "What is Greywacke?", back: "A hard, grey, sedimentary rock (sandstone and mudstone) that is the dominant basement rock of NZ. It is the parent material for most of the country's alluvial gravel soils." },
+            { front: "What is Haast Schist?", back: "A metamorphic, mica-rich rock found in Central Otago, formed from Greywacke under intense heat and pressure. It is the parent rock for many of the region's soils." },
+            { front: "What are Alluvial Soils?", back: "Soils deposited by rivers, composed of gravels, sands, and silts. They are typically free-draining and low in fertility, dominating regions like Marlborough and Hawke's Bay." },
+            { front: "What is Loess?", back: "Fine, wind-blown silt that often forms a topsoil layer over alluvial gravels in regions like Canterbury and Central Otago." },
+            { front: "What is the Rain Shadow Effect?", back: "A climatic phenomenon where mountains (like the Southern Alps) block prevailing wet winds, causing the leeward side (east coast) to be significantly drier and sunnier." },
+            { front: "What is Diurnal Range?", back: "The difference between daytime high and nighttime low temperatures. A large diurnal range, as seen in Central Otago, helps grapes develop intense flavor while retaining acidity." },
+            { front: "Describe the climate of Northland GI.", back: "New Zealand's warmest and most northerly region, with a humid, subtropical maritime climate. Sea breezes are crucial for mitigating humidity." },
+            { front: "Describe the soils of Auckland GI.", back: "Primarily volcanic and clay-rich soils. The heavy clays of Kumeu are famous for Chardonnay, while Waiheke Island has clay and some volcanic influence." },
+            { front: "Describe the terroir of Waiheke Island GI.", back: "A boutique island with a warmer, drier climate than mainland Auckland. Ideal for ripening full-bodied red grapes like Syrah and Bordeaux varieties." },
+            { front: "Describe the terroir of Gisborne GI.", back: "A warm, high-sunshine region on the east coast. Known for fertile, moisture-retentive alluvial silt loams and clays, which allows for widespread dry farming." },
+            { front: "Describe the terroir of Hawke's Bay GI.", back: "A warm, sunny region with a climate similar to Bordeaux. Terroir is diverse, from the stony, heat-retentive Gimblett Gravels to heavier clays and coastal sites." },
+            { front: "What defines the Gimblett Gravels?", back: "An ancient riverbed with extremely free-draining, stony alluvial soils. The stones absorb and radiate heat, aiding the ripening of red varieties." },
+            { front: "What defines the Bridge Pa Triangle?", back: "A sub-region of Hawke's Bay with sandy loam topsoils over deep gravels, resulting in fleshier, more opulent red wines than the Gimblett Gravels." },
+            { front: "Describe the terroir of Wairarapa GI.", back: "A cool, dry, and often windy region sheltered by mountain ranges. Defined by free-draining alluvial gravel terraces and a large diurnal range." },
+            { front: "What is the 'Martinborough Terrace'?", back: "A specific geological formation in Martinborough with shallow silt loams over very deep, free-draining gravels, ideal for structured Pinot Noir." },
+            { front: "Describe the terroir of Nelson GI.", back: "A very sunny, sheltered maritime region. Divided into the Waimea Plains (stony, alluvial loams) and the Moutere Hills (heavier, gravelly clays)." },
+            { front: "Describe the terroir of Marlborough GI.", back: "NZ's largest region. Cool, dry, and very sunny due to the rain shadow effect. Dominated by the alluvial gravel soils of the Wairau and Awatere river valleys." },
+            { front: "Contrast the Wairau and Awatere Valleys.", back: "The Wairau is warmer, producing classic tropical-fruited Sauvignon Blanc. The Awatere is cooler, drier, and windier, producing more herbaceous, mineral-driven wines with higher acidity." },
+            { front: "What is the significance of Marlborough's Southern Valleys?", back: "These valleys have heavier clay-loam soils and are prized for producing Marlborough's most structured and complex Pinot Noir." },
+            { front: "Describe the terroir of Canterbury GI.", back: "A cool, dry region in the rain shadow of the Alps. Known for its mix of alluvial gravels and significant limestone outcrops, especially in Waipara and Waikari." },
+            { front: "Describe the terroir of Waitaki Valley GI.", back: "A cool, marginal region defined by its limestone and calcareous soils, which impart a distinctive minerality and elegance to the wines." },
+            { front: "Describe the climate of Central Otago GI.", back: "New Zealand's only semi-continental climate. Characterized by hot, dry summers, cold winters, significant frost risk, and a very large diurnal temperature range." },
+            { front: "Describe the soils of Central Otago GI.", back: "Generally shallow, low-fertility soils derived from Haast Schist parent rock, often with a top layer of wind-blown loess over schist gravels." },
+            { front: "What is the highest and coolest sub-region of Central Otago?", back: "Gibbston, known for producing elegant, perfumed, and lighter-bodied Pinot Noir." },
+            { front: "What is the warmest and driest sub-region of Central Otago?", back: "Bannockburn, known for producing powerful, structured, and complex Pinot Noir." },
+            { front: "What is the 'warm soil in a cool climate' paradigm?", back: "A key concept for NZ terroir where heat-retentive stony soils in a generally cool climate allow for full ripening of grapes, creating wines with both ripeness and fresh acidity." },
+            { front: "What is the primary viticultural risk in Northland and Gisborne?", back: "Humidity and rainfall at harvest, which increases the risk of fungal diseases like botrytis." },
+            { front: "Which mountain range creates the rain shadow for Marlborough?", back: "The Richmond Range to the west." },
+            { front: "Which mountain ranges create the rain shadow for Wairarapa?", back: "The Tararua and Rimutaka Ranges to the west." },
+            { front: "What is the GDD range for Central Otago?", back: "Approximately 900-1000 GDD, making it one of NZ's coolest regions." },
+            { front: "What is the GDD range for Northland?", back: "Over 1600 GDD, making it NZ's warmest region." },
+            { front: "What is the average annual rainfall in Marlborough?", back: "Around 655 mm, making it very dry." },
+            { front: "What is the average annual rainfall in Auckland?", back: "Around 1240 mm, making it significantly wetter than the eastern regions." },
+            { front: "Which GI is located on a volcanic peninsula near Christchurch?", back: "Banks Peninsula, a sub-region of Canterbury." },
+            { front: "What is the parent rock of the limestone soils in Waitaki Valley?", back: "Oligocene limestone." },
+            { front: "Which river is the defining feature of the Waitaki Valley?", back: "The Waitaki River." },
+            { front: "Which two major lakes influence the mesoclimate of Central Otago?", back: "Lake Dunstan and Lake Wanaka." },
+            { front: "Which GI is located on a narrow isthmus between two harbours?", back: "Auckland GI." },
+            { front: "The Glasnevin Gravels are found on the valley floor of which GI?", back: "Waipara Valley GI." },
+            { front: "What is the primary geological difference between Gimblett Gravels and Bridge Pa Triangle?", back: "Gimblett Gravels is a very young riverbed (150 years old) with stony soils. Bridge Pa is an older terrace (10,000 years old) with a deeper sandy loam topsoil over the gravels." },
+            { front: "Which unofficial sub-region of Gisborne is known as the 'Golden Slope'?", back: "Hexton Hills, famed for its Chardonnay." },
+            { front: "What is the most southerly sub-region of Central Otago?", back: "Alexandra Basin." },
+            { front: "What is the most easterly wine region in the world?", back: "Gisborne, New Zealand." },
+            { front: "The Heretaunga Plains are the main alluvial plains of which region?", back: "Hawke's Bay." },
+            { front: "Which three rivers formed the Heretaunga Plains?", back: "The Ngaruroro, Tukituki, and Tutaekuri rivers." },
+            { front: "Which GI is located on the border of Canterbury and Otago?", back: "Waitaki Valley North Otago GI." },
+            { front: "What is the primary soil type on Waiheke Island?", back: "Clay-based soils, often on slopes, with some volcanic influence." },
+            { front: "What is the approximate elevation range of Central Otago vineyards?", back: "From 200 to over 400 meters." },
+            { front: "Why is high UV light intensity significant for NZ viticulture?", back: "It is thought to contribute to the development of pronounced fruit flavours and thicker grape skins (impacting tannin and colour in reds)." },
+            { front: "Which GI is the most recent to be officially registered (in Feb 2022)?", back: "Bannockburn GI, a sub-region of Central Otago." }
+        ],
+        grapes: [
+            { front: "What is the most planted grape variety in New Zealand?", back: "Sauvignon Blanc, accounting for over 60% of the national vineyard." },
+            { front: "What is the most planted red grape variety in New Zealand?", back: "Pinot Noir." },
+            { front: "What is the origin of the 'Savvy MS' clone of Sauvignon Blanc?", back: "It is a mass selection from UCD Clone 1, which originated at Château d’Yquem." },
+            { front: "What is the 'Abel' clone?", back: "A unique, prized heritage clone of Pinot Noir in New Zealand, rumored to be from Domaine de la Romanée-Conti." },
+            { front: "Name three common Dijon clones of Pinot Noir used in NZ.", back: "114, 115, 667, and 777." },
+            { front: "What is the dominant vine training system in NZ?", back: "Vertical Shoot Positioning (VSP)." },
+            { front: "What are 'thiols' in Sauvignon Blanc?", back: "Aromatic compounds that contribute tropical fruit notes like passionfruit and grapefruit." },
+            { front: "What are 'methoxypyrazines' in Sauvignon Blanc?", back: "Aromatic compounds that contribute green, herbaceous notes like capsicum and cut grass." },
+            { front: "What is the 'Mendoza' clone prized for in Chardonnay?", back: "It produces grapes of varying sizes ('hen and chicken'), leading to wines with high extract and acidity." },
+            { front: "Which region is the center for high-quality Syrah production?", back: "Hawke's Bay, particularly in the Gimblett Gravels." },
+            { front: "What is 'canopy management'?", back: "A range of viticultural practices (like leaf plucking, shoot thinning) to manage the vine's leaves and fruit for optimal quality." },
+            { front: "Is irrigation permitted in New Zealand?", back: "Yes, it is permitted and essential in the dry, eastern regions. Its use is regulated." },
+            { front: "What was NZ's most planted grape variety before the rise of Chardonnay and Sauvignon Blanc?", back: "Müller-Thurgau." },
+            { front: "Why are most NZ vines grafted onto different rootstocks?", back: "To protect them from the phylloxera root aphid, which is present in NZ soils." },
+            { front: "What does 'whole bunch fermentation' involve?", back: "Including a percentage of intact grape clusters, with stems, in the fermentation of red wines like Pinot Noir and Syrah to add structure and aromatic complexity." },
+            { front: "What is the most planted white grape after Sauvignon Blanc?", back: "Chardonnay, followed closely by Pinot Gris." },
+            { front: "What is the most planted red grape after Pinot Noir?", back: "Merlot, grown primarily in Hawke's Bay." },
+            { front: "What are the 'Pommard' clones of Pinot Noir?", back: "Clones UCD 5 and UCD 6, known for providing mid-palate weight and structure." },
+            { front: "What is 'dry farming' and where is it most common?", back: "Growing grapes without irrigation. It is most common in Gisborne due to its moisture-retentive soils." },
+            { front: "What is the 'Limmer' clone?", back: "A clone of Syrah, also known as MS, that is the foundation of many top Hawke's Bay Syrahs." },
+            { front: "What are 'Woolly Weeders'?", back: "A colloquial term for using sheep to graze and control weeds in vineyards during winter dormancy, a sustainable practice." },
+            { front: "What is the primary purpose of leaf plucking?", back: "To increase sunlight exposure and airflow around grape clusters, aiding ripening and reducing disease risk." },
+            { front: "What is the most significant viral disease in NZ vineyards?", back: "Grapevine Leafroll-associated Virus 3 (GLRaV-3), spread by mealybugs." },
+            { front: "What is the most significant fungal disease threat?", back: "Botrytis bunch rot (grey mould), especially in wet harvest conditions." },
+            { front: "When did Sauvignon Blanc become NZ's most planted variety?", back: "In 2002, when it surpassed Chardonnay." },
+            { front: "Which white grape is known for producing a range of styles from bone-dry to lusciously sweet dessert wines in the South Island?", back: "Riesling." },
+            { front: "What is the typical flavor profile of Pinot Gris in NZ?", back: "Generally off-dry and medium-bodied with notes of candied pear and apple. Premium examples can be more textural." },
+            { front: "Name two 'alternative' white varieties gaining traction in NZ.", back: "Albariño and Grüner Veltliner." },
+            { front: "Which Bordeaux variety is more planted in Hawke's Bay: Cabernet Sauvignon or Merlot?", back: "Merlot, as it generally ripens earlier and more reliably." },
+            { front: "What is the Guyot system?", back: "A method of cane pruning, typically with one or two canes, commonly used with VSP trellising in New Zealand." },
+            { front: "What is the effect of high UV light on grape skins?", back: "It tends to make them thicker, which can increase the concentration of tannins and color compounds in red wines." },
+            { front: "Which region has the highest percentage of its plantings dedicated to Pinot Noir?", back: "Central Otago, where it accounts for over 75% of the vineyard area." },
+            { front: "What is the primary risk of early budding varieties like Pinot Noir?", back: "Susceptibility to damage from spring frosts." },
+            { front: "What is Integrated Pest Management (IPM)?", back: "A key principle of SWNZ, focusing on monitoring and using non-chemical controls first, with targeted chemical use only when necessary." },
+            { front: "Which grape variety was first commercially planted in Marlborough in 1973 by Montana?", back: "Müller-Thurgau and Cabernet Sauvignon (though they struggled). Sauvignon Blanc was planted in 1975." },
+            { front: "What is the '10/5' clone?", back: "An early Swiss clone of Pinot Noir imported into NZ. It has fallen out of favor but some old vines remain." },
+            { front: "What is the primary benefit of clonal diversity for Pinot Noir?", back: "Different clones contribute different characteristics (aromatics, structure, fruit profile), and blending them creates a more complex and complete wine." },
+            { front: "Where was the first Mendoza clone of Chardonnay imported to in NZ?", back: "Gisborne, by Bill Irwin of Matawhero." },
+            { front: "What is the typical aromatic profile of Wairarapa Sauvignon Blanc?", back: "More restrained than Marlborough, with citrusy and grassy notes rather than overt tropical fruit." },
+            { front: "Which red grape is a crossing of Pinot Noir and Cinsaut, grown in very small amounts in Northland?", back: "Pinotage." },
+            { front: "What is the primary reason for the decline in Riesling plantings?", back: "Market-driven difficulty in selling the wines, despite their high quality." },
+            { front: "What is the main viticultural challenge for Merlot in Hawke's Bay?", back: "Its susceptibility to autumn rains at harvest, which can cause rot." },
+            { front: "Which grape variety is used for the iconic dessert wine 'Te Koko' by Cloudy Bay?", back: "Sauvignon Blanc. Te Koko is a barrel-fermented, alternative style, not a dessert wine." },
+            { front: "What is the typical harvest period in New Zealand?", back: "Autumn, generally from late February/early March in the north to late April/early May in the south." },
+            { front: "What is 'shoot thinning'?", back: "The practice of removing excess, non-fruitful shoots in spring to reduce canopy density and focus the vine's energy." },
+            { front: "Which grape variety is most associated with Waiheke Island?", back: "Syrah and Bordeaux varieties (in blends)." },
+            { front: "What is the typical flavor profile of Hawke's Bay Syrah?", back: "Distinctive notes of blackberry, violet, and black pepper, with juicy flesh and fresh acidity." },
+            { front: "Which white grape is the third most planted in NZ?", back: "Pinot Gris, which has seen significant growth in popularity." },
+            { front: "What is the primary impact of machine harvesting on Sauvignon Blanc juice?", back: "It increases maceration, which leads to a higher concentration of thiol precursors and thus more intense passionfruit/gooseberry aromas in the final wine." },
+            { front: "Which region holds 30% of NZ's Riesling plantings despite being only 3% of the national vineyard?", back: "North Canterbury." }
+        ],
+        law: [
+            { front: "What is the '85% Rule' in New Zealand wine law?", back: "If a vintage, variety, or GI is stated on the label, at least 85% of the wine must come from that source." },
+            { front: "What is a GI?", back: "A Geographical Indication, the sole official term for a legally defined and protected wine region in New Zealand." },
+            { front: "When did the GI Act fully come into force?", back: "2017." },
+            { front: "Does the term 'Reserve' have a legal meaning in NZ?", back: "No. Terms like 'Reserve', 'Private Bin', etc., are not legally defined and are used at the producer's discretion." },
+            { front: "Is chaptalization (adding sugar to must) legal in NZ?", back: "Yes, it is legally permitted as a corrective measure in cool vintages, but it is not common practice for premium wines." },
+            { front: "How is the name 'Gimblett Gravels' protected?", back: "By trademark law, managed by the local growers' association, not by the national GI system." },
+            { front: "What is SWNZ?", back: "Sustainable Winegrowing New Zealand, the industry's pioneering and widely adopted sustainability certification program." },
+            { front: "Are there legally mandated aging requirements in NZ?", back: "No, there are no laws for minimum aging in oak or bottle, unlike systems like Spain's Crianza/Reserva." },
+            { front: "What is the primary legislation governing wine safety and standards?", back: "The Wine Act 2003." },
+            { front: "What is a WSMP?", back: "A Wine Standards Management Plan, a mandatory operational plan for all commercial wineries to ensure safety and compliance." },
+            { front: "What is Appellation Marlborough Wine (AMW)?", back: "A private, producer-led organization with stricter rules than the GI law, including requiring 100% Marlborough grapes and bottling in NZ." },
+            { front: "Is the New Zealand GI system hierarchical?", back: "No, it is a single, flat tier. All GIs have the same legal standing." },
+            { front: "Are there laws dictating which grapes can be planted in a GI?", back: "No, the system is non-prescriptive, allowing producers freedom of choice." },
+            { front: "What was the main reason for the industry's widespread adoption of screwcaps in 2001?", back: "To combat the unacceptably high incidence of cork taint (TCA)." },
+            { front: "Which government body manages the GI register?", back: "The Intellectual Property Office of New Zealand (IPONZ)." },
+            { front: "What is the primary purpose of the NZ GI system?", back: "To guarantee the geographical origin of the wine and protect regional names in international markets." },
+            { front: "What is the legal status of acidification in NZ?", back: "It is legally permitted but relatively uncommon due to the country's cool climate which naturally preserves acidity in grapes." },
+            { front: "What is the hierarchy of GIs in NZ?", back: "It is purely geographical and nested, not qualitative (e.g., a local GI like 'Bannockburn' sits within a regional GI like 'Central Otago')." },
+            { front: "What is the minimum percentage of grapes that must come from the Gimblett Gravels for a wine to be labeled as such?", back: "95%, as stipulated by the trademark rules of the growers' association." },
+            { front: "Which ministry oversees the Wine Act and food safety?", back: "The Ministry for Primary Industries (MPI)." },
+            { front: "What is the 'protective' style of winemaking?", back: "A benchmark approach for aromatic whites, using techniques like cool fermentation in stainless steel to preserve primary fruit aromas." },
+            { front: "What is the 'textural' style of winemaking?", back: "An alternative approach using techniques like wild yeast, barrel fermentation, and lees aging to build complexity and palate weight." },
+            { front: "What is 'sur lie' aging?", back: "Aging a wine on its expired yeast cells (lees) to build texture, mouthfeel, and complexity." },
+            { front: "What is 'bâtonnage'?", back: "The stirring of the lees during barrel aging to enhance their effect on the wine's texture and flavor." },
+            { front: "What is the legal status of vineyard planting density?", back: "There are no legal requirements; it is at the discretion of the producer." },
+            { front: "What is the legal status of maximum vineyard yields?", back: "There are no legal requirements; it is at the discretion of the producer." },
+            { front: "What are the three 'enduring' GIs of New Zealand?", back: "North Island, South Island, and New Zealand." },
+            { front: "When were the first major regional GIs (like Marlborough) officially registered?", back: "In 2018, after the GI Act came into force in 2017." },
+            { front: "What is the legal definition of the NZ quality hierarchy?", back: "There is no legal quality hierarchy. Quality is conveyed by producer reputation and branding, not by the GI system." },
+            { front: "Which local GI is located within the Canterbury GI?", back: "North Canterbury GI, which in turn contains the Waipara Valley GI." },
+            { front: "What is the legal term for a designated wine region in NZ?", back: "Geographical Indication (GI)." },
+            { front: "What is the name of the Act that established the GI system?", back: "The Geographical Indications (Wine and Spirits) Registration Act 2006." },
+            { front: "Which two local GIs are within the Wairarapa GI?", back: "Gladstone GI and Martinborough GI." },
+            { front: "Which three local GIs are within the Auckland GI?", back: "Matakana GI, Kumeu GI, and Waiheke Island GI." },
+            { front: "What is the only local GI within Central Otago GI?", back: "Bannockburn GI (registered in 2022)." },
+            { front: "What does the SWNZ certification cover?", back: "Environmental, social, and economic best practices in viticulture and winemaking." },
+            { front: "What is 'Méthode Marlborough'?", back: "A registered brand for high-quality traditional method sparkling wines from Marlborough that follow specific production rules." },
+            { front: "What is the primary focus of the Wine Act 2003?", back: "Food safety, preventing fraudulent labeling, and meeting export standards." },
+            { front: "What is the legal requirement for listing blended varieties on a label?", back: "They must be listed in descending order of proportion and together must make up at least 85% of the wine." },
+            { front: "Is it legal to use oak chips or staves in NZ winemaking?", back: "Yes, the law is non-prescriptive about oak usage. The choice of oak format is up to the winemaker." },
+            { front: "What is the legal status of using wild (indigenous) yeast for fermentation?", back: "It is permitted. The choice of yeast (cultured or wild) is a stylistic decision made by the winemaker." },
+            { front: "What is the Bragato Research Institute (BRI)?", back: "The New Zealand wine industry's dedicated research institute, focusing on areas like grapevine improvement and sustainability." },
+            { front: "What is the Māori term for guardianship and stewardship of the land, a core value in SWNZ?", back: "Kaitiakitanga." },
+            { front: "Is there a legal definition for 'Old Vine' in New Zealand?", back: "No, the term is not legally defined and its meaning depends on the producer." },
+            { front: "What is the legal requirement for a wine labeled 'Wine of New Zealand'?", back: "100% of the grapes must be from New Zealand." },
+            { front: "Which local GI has two official, interchangeable names?", back: "Waipara Valley / Waipara GI." },
+            { front: "Which regional GI has two official, interchangeable names?", back: "Hawke's Bay / Hawkes Bay GI." },
+            { front: "What is the purpose of the mandatory pregnancy warning label?", back: "To inform consumers about the risks of consuming alcohol during pregnancy, a mandatory requirement since August 2023." },
+            { front: "Can a wine be labeled 'Marlborough' if 15% of the grapes come from Nelson?", back: "Yes, the 85% rule allows for up to 15% of grapes to come from another NZ region." },
+            { front: "What is the role of New Zealand Winegrowers (NZW)?", back: "The national industry body representing growers and wineries, which runs programs like SWNZ." }
+        ],
+        gastronomy: [
+            { front: "What is Hāngī?", back: "A traditional Māori cooking method of slow-steaming meat and root vegetables in a pit oven." },
+            { front: "What is the classic wine pairing for Green-Lipped Mussels?", back: "Marlborough Sauvignon Blanc." },
+            { front: "What are Bluff Oysters?", back: "A prized seasonal delicacy, dredge oysters from the Foveaux Strait known for their intense, briny flavor." },
+            { front: "What is Kūmara?", back: "The Māori name for sweet potato, a key ingredient in New Zealand cuisine." },
+            { front: "What is L&P?", back: "Lemon & Paeroa, an iconic, sweet, lemon-flavored soft drink." },
+            { front: "Name two native botanicals used in New Zealand craft gin.", back: "Horopito (native pepper tree) and Kawakawa (a member of the pepper family)." },
+            { front: "What is the name of the NZ hop variety famous for its Sauvignon Blanc-like aromas?", back: "Nelson Sauvin." },
+            { front: "What is the classic wine pairing for a traditional roast lamb?", back: "A structured Hawke's Bay Bordeaux blend or a mature Pinot Noir." },
+            { front: "What is Pavlova?", back: "A meringue-based dessert with a crisp crust and soft, light inside, topped with cream and fruit." },
+            { front: "What is the ideal wine pairing for Pavlova?", back: "A luscious, high-acid late-harvest Riesling." },
+            { front: "What is the 'paddock-to-plate' ethos?", back: "A culinary philosophy emphasizing fresh, high-quality, locally sourced produce." },
+            { front: "Which grape is typically used for Rosé in the North Island?", back: "Warmer climate varieties like Merlot and Cabernet Sauvignon." },
+            { front: "Which grape is typically used for Rosé in the South Island?", back: "Pinot Noir, producing a more delicate style." },
+            { front: "What is the general style of New Zealand craft beer?", back: "Highly aromatic, often showcasing unique local hop varieties with tropical and citrus notes." },
+            { front: "Name a famous New Zealand artisan cheesemaker.", back: "Whitestone or Kāpiti." },
+            { front: "What is the ideal wine pairing for Bluff Oysters?", back: "A bone-dry Riesling from Canterbury or a crisp Méthode Traditionelle sparkling wine." },
+            { front: "What is the most iconic fruit topping for a New Zealand Pavlova?", back: "Kiwifruit and strawberries." },
+            { front: "Which city is a major hub for craft beer, home to breweries like Garage Project?", back: "Wellington." },
+            { front: "What flavor profile does Horopito impart to gin?", back: "A spicy, citrusy flavor." },
+            { front: "What flavor profile does Kawakawa impart to gin?", back: "A minty, peppery character." },
+            { front: "What is the typical preparation for Green-Lipped Mussels?", back: "Steamed in a broth of white wine, garlic, and herbs." },
+            { front: "Which region is particularly famous for its artisan cheese production, home to Whitestone Cheese?", back: "North Otago (Oamaru)." },
+            { front: "What is the defining characteristic of a Green-Lipped Mussel's appearance?", back: "Its distinctive green-edged shell." },
+            { front: "What is the aromatic link between NZ craft beer and wine?", back: "Many NZ-bred hops (like Nelson Sauvin) share the same tropical fruit and grapefruit aromatic compounds (thiols) found in Marlborough Sauvignon Blanc." },
+            { front: "What is the ideal wine pairing for Hāngī?", back: "A savory Pinot Noir from Martinborough/Central Otago or a textural, full-bodied Chardonnay." },
+            { front: "What is the key structural component in wine that makes it a good match for rich, fatty dishes like roast lamb?", back: "Tannin, which helps to cut through the richness of the meat." },
+            { front: "Which hop variety is named after a major NZ wine region?", back: "Nelson Sauvin." },
+            { front: "What does 'L&P' stand for?", back: "Lemon & Paeroa." },
+            { front: "Which of the 'iconic dishes' is a dessert?", back: "Pavlova." },
+            { front: "Which of the 'iconic dishes' is a type of shellfish?", back: "Green-Lipped Mussels and Bluff Oysters." },
+            { front: "What is the primary style of sparkling wine produced in NZ?", back: "Méthode Traditionelle, using Chardonnay and Pinot Noir, primarily from Marlborough." },
+            { front: "Which regions are best for producing botrytised dessert wines?", back: "Martinborough, Gisborne, and parts of Marlborough, where autumn conditions can be favorable for 'noble rot'." },
+            { front: "What is the world's most famous food from New Zealand?", back: "Lamb, renowned globally for its tenderness and flavor." },
+            { front: "What is the main difference between a Hāngī and a barbecue?", back: "Hāngī is a method of slow-steaming food underground, while barbecue is a method of grilling over direct heat." },
+            { front: "Name an influential, pioneering craft brewery from Dunedin.", back: "Emerson's Brewery." },
+            { front: "What is the typical texture of a Bluff Oyster?", back: "Succulent and plump with an intense briny flavor." },
+            { front: "What is the typical texture of a Pavlova?", back: "A crisp meringue shell with a soft, marshmallow-like interior." },
+            { front: "Which spirit category has seen a 'boom' in New Zealand in recent years?", back: "Craft Gin, often featuring native botanicals." },
+            { front: "What is a common seasoning for New Zealand roast lamb?", back: "Rosemary and garlic." },
+            { front: "What is the source of the unique flavor in a Hāngī?", back: "The slow-steaming process and the earthy, smoky flavor imparted by the hot rocks and earth oven." },
+            { front: "Which two NZ hop varieties, besides Nelson Sauvin, are sought after globally?", back: "Riwaka and Motueka." },
+            { front: "What is the defining characteristic of New Zealand's national culinary identity?", back: "A 'paddock-to-plate' ethos emphasizing fresh, high-quality local produce from land and sea." },
+            { front: "Are there any NZ food products with EU PDO/PGI status?", back: "No, currently there are none." },
+            { front: "What is the typical color of a Green-Lipped Mussel's shell?", back: "Dark brown to green with a distinctive green lip." },
+            { front: "Which iconic dish is named after a famous Russian ballerina?", back: "Pavlova, named in honor of Anna Pavlova after her tour of NZ and Australia in the 1920s." },
+            { front: "What is the Foveaux Strait?", back: "The body of water separating the South Island from Stewart Island, where Bluff Oysters are harvested." },
+            { front: "Which of these is NOT a typical ingredient in a Hāngī: Pork, Kūmara, Salmon, Chicken?", back: "Salmon. Hāngī typically uses pork, chicken, and root vegetables." },
+            { front: "Which city is home to the Epic Brewing Company?", back: "Auckland." },
+            { front: "What is the best way to serve Bluff Oysters to appreciate their flavor?", back: "Raw on the half shell with a squeeze of lemon." },
+            { front: "What is the primary difference in Rosé styles between the North and South Islands?", back: "North Island Rosé is often from Merlot/Cabernet and is fuller, while South Island Rosé is from Pinot Noir and is more delicate." }
+        ],
+        critic: [
+            { front: "Which producer is the undisputed benchmark for Chardonnay in New Zealand?", back: "Kumeu River, from Kumeu, Auckland." },
+            { front: "What is the flagship wine of Te Mata Estate?", back: "Coleraine, an iconic Bordeaux-style blend from Hawke's Bay." },
+            { front: "Which Central Otago producer is a leader in biodynamic viticulture and famous for its single-block Pinot Noirs like 'Block 3' and 'Block 5'?", back: "Felton Road." },
+            { front: "Which producer pioneered modern viticulture in Martinborough and is famous for its 'Abel' clone Pinot Noir?", back: "Ata Rangi." },
+            { front: "Which winery's 1985 Sauvignon Blanc catapulted Marlborough to global fame?", back: "Cloudy Bay." },
+            { front: "Describe the 2020 vintage in New Zealand.", back: "Excellent, a 'vintage of a lifetime'. A perfect, dry, and stable growing season led to wines of exceptional ripeness, concentration, and balance." },
+            { front: "Describe the 2023 vintage in New Zealand.", back: "A vintage of two halves. Devastating for the North Island (Cyclone Gabrielle), but excellent for the South Island which had a superb, dry season." },
+            { front: "Who is the benchmark producer for the Nelson region, particularly for their Moutere Chardonnay?", back: "Neudorf Vineyards." },
+            { front: "Which Hawke's Bay producer makes the iconic 'Le Sol' Syrah and 'Sophia' Merlot blend?", back: "Craggy Range." },
+            { front: "Which winery in Gisborne was New Zealand's first certified organic and biodynamic estate?", back: "Millton Vineyards." },
+            { front: "Stonyridge 'Larose' is a cult red wine from which island GI?", back: "Waiheke Island." },
+            { front: "Which two producers are considered benchmarks in the Canterbury region?", back: "Pegasus Bay and the cult winery Bell Hill." },
+            { front: "Who founded Greywacke after being the founding winemaker at Cloudy Bay?", back: "Kevin Judd." },
+            { front: "Which producer is one of Central Otago's pioneers, located on the shores of Lake Wanaka and practicing biodynamics?", back: "Rippon." },
+            { front: "Describe the 2012 vintage in New Zealand.", back: "Fair. A very cool and difficult vintage across the country with low yields, resulting in lighter wines with high acidity." },
+            { front: "What is the quality hierarchy model in New Zealand based on?", back: "Producer/brand reputation and consistent performance over time, not legally classified vineyards." },
+            { front: "Which producer makes the iconic 'Homage' Syrah?", back: "Trinity Hill in Hawke's Bay." },
+            { front: "Which producer makes the iconic dessert wine 'Sweet Agnes' Riesling?", back: "Seifried Estate in Nelson." },
+            { front: "What is the flagship wine of Dry River in Martinborough?", back: "Pinot Noir, known for its structure and aging potential." },
+            { front: "Which producer is a leader in Marlborough sparkling wine with their 'Pelorus' brand?", back: "Cloudy Bay." },
+            { front: "Describe the 2013 vintage.", back: "Excellent, especially for the North Island. A hot, dry summer produced exceptionally powerful red wines in Hawke's Bay." },
+            { front: "Describe the 2017 vintage.", back: "Fair to Good. A very challenging, cool, and wet vintage. Quality is highly variable and producer-dependent." },
+            { front: "Which producer is known for its single-vineyard Pinot Noirs exploring Central Otago sub-regions like Gibbston, Bannockburn, and Bendigo?", back: "Valli Vineyards, founded by Grant Taylor." },
+            { front: "Which producer is a benchmark for the Bannockburn sub-region of Central Otago?", back: "Mt. Difficulty." },
+            { front: "Which producer is known for its experimental 'F-Series' of Rieslings, replicating the German Prädikat system?", back: "Framingham in Marlborough." },
+            { front: "Name a 'Value Champion' producer known for quality across all price points.", back: "Villa Maria or Saint Clair Family Estate." },
+            { front: "Which Auckland producer is one of NZ's oldest family-owned wineries, founded in 1916?", back: "Babich Wines." },
+            { front: "Which producer is a leader in biodynamic viticulture in Canterbury, known for its high-density, own-rooted vineyard?", back: "Pyramid Valley." },
+            { front: "What is a key critical challenge facing the NZ wine industry?", back: "Overcoming the global perception of its Sauvignon Blanc as a simple, commercial wine, which can overshadow its other fine wines." },
+            { front: "Which vintage was dramatically small due to spring frosts but resulted in highly concentrated wines?", back: "2021." },
+            { front: "Which producer is a pioneer of the Awatere Valley in Marlborough?", back: "Vavasour (now part of Foley Family Wines)." },
+            { front: "Which producer is known for their single-vineyard 'Clayvin' Pinot Noir and Chardonnay?", back: "Giesen (who own the vineyard) and Fromm (who have sourced from it for years)." },
+            { front: "What is the name of the iconic, barrel-fermented Sauvignon Blanc from Cloudy Bay?", back: "Te Koko." },
+            { front: "Which producer is a pioneer of the Waitaki Valley, known for their limestone-terroir wines?", back: "Ostler." },
+            { front: "Which vintage was known for being a very large harvest that helped replenish stocks?", back: "2022." },
+            { front: "Which producer is a pioneer of organic viticulture in Nelson, certified since 1993?", back: "Greenhough." },
+            { front: "What is 'The Real Review Wine Classification'?", back: "A merit-based classification system for NZ wines based on tasting performance over a minimum of a decade, rewarding producer consistency." },
+            { front: "Which producer makes the iconic 'Aroha' Pinot Noir from Martinborough?", back: "Craggy Range, from their Te Muna Road vineyard." },
+            { front: "Which producer is a pioneer of the Gimblett Gravels, with their 'Bullnose' Syrah?", back: "Te Mata Estate." },
+            { front: "Which producer, founded by an Austrian, is a leader in Central Otago sparkling wine and also grows Grüner Veltliner?", back: "Quartz Reef, founded by Rudi Bauer." },
+            { front: "Describe the 2014 vintage.", back: "Excellent. A standout year, especially in the South Island, with a long, cool, dry season producing wines with intense aromatics and perfect balance." },
+            { front: "Which producer is known for its architectural, wing-shaped winery in Gibbston and is certified organic?", back: "Peregrine." },
+            { front: "Which producer is known for its collaboration with François Millet of Domaine Comte Georges de Vogüé on the 'Cuvée Aux Antipodes' Pinot Noir?", back: "Prophet's Rock in Central Otago." },
+            { front: "Which family-owned Marlborough pioneer is known for their 'MiruMiru' sparkling wine?", back: "Hunter's Wines." },
+            { front: "Which producer is known for its extensive 'Pioneer Block' series of single-vineyard wines?", back: "Saint Clair Family Estate." },
+            { front: "Which producer is named after a nearby satellite monitoring 'spy base' in the Waihopai Valley?", back: "Spy Valley." },
+            { front: "Which winery was founded by the Ibbotson family, who were initially contract growers in Marlborough?", back: "Saint Clair Family Estate." },
+            { front: "Which producer is known for their powerful 'Prima Donna' Pinot Noir and 'Bel Canto' Dry Riesling from Waipara?", back: "Pegasus Bay." },
+            { front: "Which producer is one of the largest single-vineyard estates in Central Otago, located near Mount Pisa?", back: "Amisfield." },
+            { front: "Which producer is known for their high-end Pinot Noir and Chardonnay from the Clayvin Vineyard in Marlborough?", back: "Giesen." }
+        ]
+    }
+};
+
+// --- GAME LOGIC --- //
+document.addEventListener('DOMContentLoaded', () => {
+    // State management
+    const state = {
+        currentModule: null,
+        currentQuestionIndex: 0,
+        score: 0,
+        currentQuizQuestions: [],
+        apiKey: '',
+        historianChallengesOrder: [],
+        currentHistorianIndex: 0,
+        currentFlashcardDeck: [],
+        currentFlashcardIndex: 0,
+    };
+
+    // DOM Elements
+    const mainMenu = document.getElementById('main-menu');
+    const quizScreen = document.getElementById('quiz-screen');
+    const historianScreen = document.getElementById('historian-screen');
+    const flashcardScreen = document.getElementById('flashcard-screen');
+    
+    const modalBackdrop = document.getElementById('modal-backdrop');
+    const modalContent = document.getElementById('modal-content');
+    const modalTitle = document.getElementById('modal-title');
+    const modalBody = document.getElementById('modal-body');
+    const modalCloseBtn = document.getElementById('modal-close-btn');
+
+    const aiModalBackdrop = document.getElementById('ai-modal-backdrop');
+    const aiModalTitle = document.getElementById('ai-modal-title');
+    const aiModalBody = document.getElementById('ai-modal-body');
+    const aiModalCloseBtn = document.getElementById('ai-modal-close-btn');
+
+    const moduleButtons = document.querySelectorAll('.module-btn');
+    const aiSettingsBtn = document.getElementById('ai-settings-btn');
+    const backToMenuButtons = document.querySelectorAll('.back-to-menu-btn');
+    
+    // --- Utility Functions --- //
+    const shuffleArray = (array) => {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    };
+
+    const showScreen = (screen) => {
+        mainMenu.classList.add('hidden');
+        quizScreen.classList.add('hidden');
+        historianScreen.classList.add('hidden');
+        flashcardScreen.classList.add('hidden');
+        
+        mainMenu.classList.remove('flex');
+        quizScreen.classList.remove('flex');
+        historianScreen.classList.remove('flex');
+        flashcardScreen.classList.remove('flex');
+
+        screen.classList.remove('hidden');
+        if (screen === mainMenu) {
+             screen.classList.add('block'); // Main menu is block for centering
+        } else {
+             screen.classList.add('flex', 'flex-col'); // Other screens are flex
+        }
+    };
+
+    const returnToMainMenu = () => {
+        // Reset all game states
+        state.currentModule = null;
+        state.currentQuestionIndex = 0;
+        state.score = 0;
+        state.currentQuizQuestions = [];
+        state.historianChallengesOrder = [];
+        state.currentHistorianIndex = 0;
+        state.currentFlashcardDeck = [];
+        state.currentFlashcardIndex = 0;
+        showScreen(mainMenu);
+    };
+
+    backToMenuButtons.forEach(btn => btn.addEventListener('click', returnToMainMenu));
+
+
+    // --- Modal Logic --- //
+    const openModal = (title, bodyHtml, onConfirm) => {
+        modalTitle.textContent = title;
+        modalBody.innerHTML = bodyHtml;
+        modalBackdrop.classList.remove('hidden');
+        
+        const confirmButton = modalBody.querySelector('.modal-confirm-btn');
+        if (confirmButton) {
+            confirmButton.addEventListener('click', () => {
+                closeModal();
+                if (onConfirm) onConfirm();
+            }, { once: true });
+        }
+    };
+
+    const closeModal = () => {
+        modalBackdrop.classList.add('hidden');
+    };
+    
+    const openAiModal = (title) => {
+        aiModalTitle.textContent = title;
+        aiModalBody.innerHTML = `<div class="flex justify-center items-center h-full"><div class="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-purple-500"></div></div>`;
+        aiModalBackdrop.classList.remove('hidden');
+    };
+
+    const updateAiModalBody = (htmlContent) => {
+        aiModalBody.innerHTML = htmlContent;
+    };
+    
+    const closeAiModal = () => {
+        aiModalBackdrop.classList.add('hidden');
+    };
+
+    modalCloseBtn.addEventListener('click', closeModal);
+    aiModalCloseBtn.addEventListener('click', closeAiModal);
+    modalBackdrop.addEventListener('click', (e) => {
+        if (e.target === modalBackdrop) closeModal();
+    });
+    aiModalBackdrop.addEventListener('click', (e) => {
+        if (e.target === aiModalBackdrop) closeAiModal();
+    });
+
+    // --- AI Settings --- //
+    const showAiSettings = () => {
+        const body = `
+            <p class="mb-4">Enter your Google AI Studio API key to enable AI-powered features like 'Generate Profile' and 'Explain Pairing'.</p>
+            <input type="password" id="api-key-input" class="w-full p-2 rounded bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="Enter your API key">
+            <p class="text-sm text-gray-400 mt-2">Your key is used only for this session and is not stored.</p>
+            <p class="text-sm mt-2">Get your key here: <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-purple-400 hover:underline">aistudio.google.com</a></p>
+            <p class="text-xs text-yellow-400 mt-4">Security Reminder: Treat your API key like a password. Do not share it publicly.</p>
+            <div class="mt-6 text-right">
+                <button id="save-api-key-btn" class="bg-purple-700 hover:bg-purple-800 text-white font-bold py-2 px-4 rounded-lg transition-colors">Save Key</button>
+            </div>
+        `;
+        openModal('⚙️ AI Settings', body);
+        
+        document.getElementById('save-api-key-btn').addEventListener('click', () => {
+            const input = document.getElementById('api-key-input');
+            state.apiKey = input.value.trim();
+            if (state.apiKey) {
+                alert('API Key saved for this session.');
+            } else {
+                alert('API Key removed.');
+            }
+            closeModal();
+        });
+    };
+    aiSettingsBtn.addEventListener('click', showAiSettings);
+
+    // --- Main Menu & Game Start --- //
+    moduleButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const module = button.dataset.module;
+            state.currentModule = module;
+            
+            if (module === 'flashcards') {
+                showFlashcardTopicSelector();
+            } else if (module === 'historian') {
+                startHistorianModule();
+            } else {
+                const moduleTitle = button.querySelector('h3').textContent;
+                const instructions = `
+                    <p>Welcome to ${moduleTitle}!</p>
+                    <p class="mt-2">You will be presented with 10 multiple-choice questions drawn from a large question bank.</p>
+                     <ul class="list-disc list-inside mt-2">
+                        <li>Read each question carefully and select the best answer.</li>
+                        <li>After answering, you'll receive immediate feedback and an explanation.</li>
+                        <li>Use the optional AI features to dive deeper into topics you find interesting!</li>
+                    </ul>
+                     <div class="mt-6 text-center">
+                        <button class="modal-confirm-btn bg-purple-700 hover:bg-purple-800 text-white font-bold py-2 px-6 rounded-lg transition-colors">Start Quiz</button>
+                    </div>
+                `;
+                openModal(`${moduleTitle}: Instructions`, instructions, () => startQuiz(module));
+            }
+        });
+    });
+
+    // --- Welcome Modal --- //
+    const showWelcomeModal = () => {
+         const body = `
+            <p>This is an interactive study game for the advanced wine student, based on a comprehensive research document on New Zealand wine.</p>
+            <p class="mt-4">Test your knowledge across multiple modules, from history and terroir to producers and gastronomy. Use the integrated AI features to deepen your understanding of key topics.</p>
+            <p class="mt-4">To use the AI features, you'll need a Google AI Studio API key. You can add it in the 'AI Settings' on the main menu.</p>
+            <div class="mt-6 text-center">
+                <button id="start-game-btn" class="bg-purple-700 hover:bg-purple-800 text-white font-bold py-2 px-6 rounded-lg transition-colors">Let's Begin</button>
+            </div>
+        `;
+        openModal("Welcome to the Master's Challenge!", body);
+        document.getElementById('start-game-btn').addEventListener('click', closeModal);
+    };
+
+    // --- Quiz Logic --- //
+    const startQuiz = (module) => {
+        state.currentQuestionIndex = 0;
+        state.score = 0;
+        state.currentQuizQuestions = shuffleArray([...gameData[module]]).slice(0, 10);
+        
+        document.getElementById('quiz-title').textContent = document.querySelector(`[data-module="${module}"] h3`).textContent;
+        document.getElementById('feedback-container').classList.add('hidden');
+        document.getElementById('next-question-btn').classList.add('hidden');
+
+        showScreen(quizScreen);
+        displayQuestion();
+    };
+
+    const displayQuestion = () => {
+        const questionData = state.currentQuizQuestions[state.currentQuestionIndex];
+        document.getElementById('question-text').textContent = questionData.question;
+        document.getElementById('quiz-progress').textContent = `${state.currentQuestionIndex + 1} / 10`;
+
+        const optionsContainer = document.getElementById('options-container');
+        optionsContainer.innerHTML = '';
+        const shuffledOptions = shuffleArray([...questionData.options]);
+
+        shuffledOptions.forEach(option => {
+            const button = document.createElement('button');
+            button.textContent = option;
+            button.classList.add('option-btn', 'bg-gray-700', 'hover:bg-purple-600', 'p-4', 'rounded-lg', 'transition-colors', 'text-left', 'w-full');
+            button.addEventListener('click', () => checkAnswer(option, questionData.correctAnswer, questionData));
+            optionsContainer.appendChild(button);
+        });
+    };
+
+    const checkAnswer = (selectedOption, correctAnswer, questionData) => {
+        const optionButtons = document.querySelectorAll('.option-btn');
+        let isCorrect = selectedOption === correctAnswer;
+        if (isCorrect) {
+            state.score++;
+        }
+
+        optionButtons.forEach(button => {
+            button.disabled = true;
+            if (button.textContent === correctAnswer) {
+                button.classList.remove('hover:bg-purple-600', 'bg-gray-700');
+                button.classList.add('bg-green-600');
+            } else if (button.textContent === selectedOption) {
+                button.classList.remove('hover:bg-purple-600', 'bg-gray-700');
+                button.classList.add('bg-red-600');
+            }
+        });
+        
+        const feedbackContainer = document.getElementById('feedback-container');
+        document.getElementById('explanation-text').textContent = questionData.explanation;
+        
+        const aiButtonContainer = document.getElementById('ai-button-container');
+        aiButtonContainer.innerHTML = '';
+        if (isCorrect && questionData.subjectType && questionData.subjectName) {
+            const aiButton = document.createElement('button');
+            aiButton.classList.add('bg-indigo-600', 'hover:bg-indigo-700', 'text-white', 'font-bold', 'py-2', 'px-4', 'rounded-lg', 'transition-colors');
+            
+            let buttonText = '✨ Dive Deeper';
+            let promptType = questionData.subjectType;
+
+            if (promptType === 'grape') buttonText = `📚 Generate Ampelography Profile`;
+            if (promptType === 'wine' || promptType === 'producer' || promptType === 'vintage' || promptType === 'place') buttonText = `✨ Generate Profile for ${questionData.subjectName}`;
+            if (promptType === 'dish' || promptType === 'wine_pairing') buttonText = `🍴 Explain the Pairing`;
+            if (promptType === 'ingredient' || promptType === 'spirit' || promptType === 'liqueur') buttonText = `💡 Learn More about ${questionData.subjectName}`;
+
+            aiButton.textContent = buttonText;
+            aiButton.addEventListener('click', () => handleAiRequest(questionData.subjectType, questionData.subjectName));
+            aiButtonContainer.appendChild(aiButton);
+        }
+
+        feedbackContainer.classList.remove('hidden');
+        document.getElementById('next-question-btn').classList.remove('hidden');
+    };
+
+    document.getElementById('next-question-btn').addEventListener('click', () => {
+        state.currentQuestionIndex++;
+        if (state.currentQuestionIndex < state.currentQuizQuestions.length) {
+            document.getElementById('feedback-container').classList.add('hidden');
+            document.getElementById('next-question-btn').classList.add('hidden');
+            displayQuestion();
+        } else {
+            endGame();
+        }
+    });
+
+    const endGame = () => {
+        const body = `
+            <p class="text-xl text-center">You scored ${state.score} out of 10!</p>
+            <p class="mt-4 text-center text-gray-400">Play again to get a new set of questions from the bank.</p>
+            <div class="mt-6 text-center">
+                <button class="modal-confirm-btn bg-purple-700 hover:bg-purple-800 text-white font-bold py-2 px-6 rounded-lg transition-colors">Return to Menu</button>
+            </div>
+        `;
+        openModal('Module Complete!', body, returnToMainMenu);
+    };
+
+    // --- Historian's Scroll Logic --- //
+    const startHistorianModule = () => {
+        state.historianChallengesOrder = shuffleArray([...gameData.historian]);
+        state.currentHistorianIndex = 0;
+        const instructions = `
+            <p>Welcome to The Historian's Scroll!</p>
+            <p class="mt-2">Your challenge is to arrange key events from New Zealand's wine history into the correct chronological order.</p>
+            <ul class="list-disc list-inside mt-2">
+                <li>You will face 5 different timeline puzzles.</li>
+                <li>Click an event from the left to add it to your timeline. Click it again in the timeline to remove it.</li>
+                <li>Once your timeline is complete, press 'Submit'.</li>
+            </ul>
+            <div class="mt-6 text-center">
+                <button class="modal-confirm-btn bg-purple-700 hover:bg-purple-800 text-white font-bold py-2 px-6 rounded-lg transition-colors">Begin</button>
+            </div>
+        `;
+        openModal('📜 The Historian\'s Scroll: Instructions', instructions, loadHistorianChallenge);
+    };
+
+    const loadHistorianChallenge = () => {
+        const challenge = state.historianChallengesOrder[state.currentHistorianIndex];
+        const optionsContainer = document.getElementById('historian-options');
+        const timelineContainer = document.getElementById('historian-timeline');
+        
+        document.getElementById('historian-challenge-title').textContent = challenge.title;
+        
+        optionsContainer.innerHTML = '';
+        timelineContainer.innerHTML = '';
+
+        document.getElementById('historian-game-view').classList.remove('hidden');
+        document.getElementById('historian-result-view').classList.add('hidden');
+        document.getElementById('historian-submit-btn').classList.remove('hidden');
+        document.getElementById('historian-next-btn').classList.add('hidden');
+
+        const shuffledEvents = shuffleArray([...challenge.events]);
+        shuffledEvents.forEach((event, index) => {
+            const eventEl = document.createElement('div');
+            eventEl.textContent = event.text;
+            eventEl.dataset.year = event.year;
+            eventEl.classList.add('p-3', 'bg-gray-700', 'rounded-lg', 'cursor-pointer', 'hover:bg-purple-600', 'transition-colors');
+            optionsContainer.appendChild(eventEl);
+        });
+        showScreen(historianScreen);
+    };
+
+    document.getElementById('historian-options').addEventListener('click', (e) => {
+        if (e.target.matches('div')) {
+            document.getElementById('historian-timeline').appendChild(e.target);
+        }
+    });
+
+    document.getElementById('historian-timeline').addEventListener('click', (e) => {
+        if (e.target.matches('div')) {
+            document.getElementById('historian-options').appendChild(e.target);
+        }
+    });
+
+    document.getElementById('historian-submit-btn').addEventListener('click', () => {
+        const timelineContainer = document.getElementById('historian-timeline');
+        if (timelineContainer.children.length !== state.historianChallengesOrder[state.currentHistorianIndex].events.length) {
+            alert("Please place all events in the timeline before submitting.");
+            return;
+        }
+
+        const correctOrder = [...state.historianChallengesOrder[state.currentHistorianIndex].events].sort((a, b) => a.year - b.year);
+        
+        const playerResultContainer = document.getElementById('player-timeline-result');
+        const correctResultContainer = document.getElementById('correct-timeline-result');
+        playerResultContainer.innerHTML = '';
+        correctResultContainer.innerHTML = '';
+
+        const playerEvents = Array.from(timelineContainer.children);
+
+        playerEvents.forEach((el, index) => {
+            const eventYear = parseInt(el.dataset.year);
+            const correctYear = correctOrder[index].year;
+
+            const resultEl = document.createElement('div');
+            resultEl.innerHTML = `<span class="font-bold">${eventYear}</span>: ${el.textContent}`;
+            resultEl.classList.add('p-2', 'rounded');
+
+            if (eventYear === correctYear) {
+                resultEl.classList.add('correct-item');
+            } else {
+                resultEl.classList.add('incorrect-item');
+            }
+            playerResultContainer.appendChild(resultEl);
+        });
+
+        correctOrder.forEach(event => {
+            const correctEl = document.createElement('div');
+            correctEl.innerHTML = `<span class="font-bold">${event.year}</span>: ${event.text}`;
+            correctEl.classList.add('p-2', 'bg-gray-800', 'rounded');
+            correctResultContainer.appendChild(correctEl);
+        });
+
+        document.getElementById('historian-game-view').classList.add('hidden');
+        document.getElementById('historian-result-view').classList.remove('hidden');
+        document.getElementById('historian-submit-btn').classList.add('hidden');
+        document.getElementById('historian-next-btn').classList.remove('hidden');
+    });
+
+    document.getElementById('historian-next-btn').addEventListener('click', () => {
+        state.currentHistorianIndex++;
+        if (state.currentHistorianIndex < state.historianChallengesOrder.length) {
+            loadHistorianChallenge();
+        } else {
+            const body = `
+                <p class="text-xl text-center">You have completed all timeline challenges!</p>
+                <p class="mt-4 text-center text-gray-400">Excellent work. Come back any time to practice again.</p>
+                <div class="mt-6 text-center">
+                    <button class="modal-confirm-btn bg-purple-700 hover:bg-purple-800 text-white font-bold py-2 px-6 rounded-lg transition-colors">Return to Menu</button>
+                </div>
+            `;
+            openModal('Historian Module Complete!', body, returnToMainMenu);
+        }
+    });
+
+    // --- Flashcard Logic --- //
+    const showFlashcardTopicSelector = () => {
+        const topics = Object.keys(gameData.flashcards);
+        const checkboxes = topics.map(topic => `
+            <label class="flex items-center space-x-2">
+                <input type="checkbox" class="flashcard-topic-checkbox form-checkbox h-5 w-5 bg-gray-700 border-gray-600 text-purple-600 focus:ring-purple-500" value="${topic}">
+                <span class="capitalize">${topic}</span>
+            </label>
+        `).join('');
+
+        const body = `
+            <p class="mb-4">Select the topics you want to study:</p>
+            <div class="grid grid-cols-2 gap-4">
+                ${checkboxes}
+            </div>
+            <div class="mt-4">
+                <label class="flex items-center space-x-2">
+                    <input type="checkbox" id="flashcard-select-all" class="form-checkbox h-5 w-5 bg-gray-700 border-gray-600 text-purple-600 focus:ring-purple-500">
+                    <span>Select All</span>
+                </label>
+            </div>
+            <div class="mt-6 text-center">
+                <button id="start-flashcard-session" class="bg-purple-700 hover:bg-purple-800 text-white font-bold py-2 px-6 rounded-lg transition-colors">Start Studying</button>
+            </div>
+        `;
+        openModal('Build Your Study Deck', body);
+
+        const selectAllCheckbox = document.getElementById('flashcard-select-all');
+        const topicCheckboxes = document.querySelectorAll('.flashcard-topic-checkbox');
+
+        selectAllCheckbox.addEventListener('change', (e) => {
+            topicCheckboxes.forEach(checkbox => checkbox.checked = e.target.checked);
+        });
+
+        document.getElementById('start-flashcard-session').addEventListener('click', () => {
+            const selectedTopics = Array.from(topicCheckboxes)
+                .filter(checkbox => checkbox.checked)
+                .map(checkbox => checkbox.value);
+            
+            if (selectedTopics.length > 0) {
+                startFlashcardSession(selectedTopics);
+                closeModal();
+            } else {
+                alert('Please select at least one topic.');
+            }
+        });
+    };
+    
+    const startFlashcardSession = (topics) => {
+        let deck = [];
+        topics.forEach(topic => {
+            deck = deck.concat(gameData.flashcards[topic]);
+        });
+        state.currentFlashcardDeck = shuffleArray(deck);
+        state.currentFlashcardIndex = 0;
+        
+        if (state.currentFlashcardDeck.length === 0) {
+            alert('No flashcards available for the selected topics.');
+            showScreen(mainMenu);
+            return;
+        }
+
+        showScreen(flashcardScreen);
+        displayFlashcard();
+    };
+
+    const displayFlashcard = () => {
+        const cardData = state.currentFlashcardDeck[state.currentFlashcardIndex];
+        document.getElementById('flashcard-front').textContent = cardData.front;
+        document.getElementById('flashcard-back').textContent = cardData.back;
+        document.getElementById('flashcard-progress').textContent = `${state.currentFlashcardIndex + 1} / ${state.currentFlashcardDeck.length}`;
+        document.querySelector('.flashcard').classList.remove('flipped');
+    };
+
+    document.querySelector('.flashcard').addEventListener('click', (e) => {
+        e.currentTarget.classList.toggle('flipped');
+    });
+
+    document.getElementById('flashcard-next-btn').addEventListener('click', () => {
+        if (state.currentFlashcardIndex < state.currentFlashcardDeck.length - 1) {
+            state.currentFlashcardIndex++;
+            displayFlashcard();
+        }
+    });
+
+    document.getElementById('flashcard-prev-btn').addEventListener('click', () => {
+        if (state.currentFlashcardIndex > 0) {
+            state.currentFlashcardIndex--;
+            displayFlashcard();
+        }
+    });
+
+    // --- AI Feature Logic --- //
+    const handleAiRequest = (subjectType, subjectName) => {
+        if (!state.apiKey) {
+            alert("Please set your Google AI Studio API key in 'AI Settings' to use this feature.");
+            showAiSettings();
+            return;
+        }
+
+        let prompt = '';
+        let title = 'AI-Generated Information';
+        const region = gameData.regionName;
+
+        switch (subjectType) {
+            case 'grape':
+                title = `Ampelography Profile: ${subjectName}`;
+                prompt = `You are a master ampelographer and wine educator with a specialization in ${region}. Your task is to profile the grape: ${subjectName}. Your response must follow this strict pyramid of importance: 1. The grape's specific expression and role within ${region}. 2. Its general viticultural characteristics as they manifest in ${region}'s climate. 3. Its history within the region. Your entire response must be framed through the lens of ${region}. Synthesize information from authoritative sources, but always prioritize the context of ${region}. Structure your response with the following sections:<h3>Overview and History in ${region}</h3><h3>Viticultural Characteristics in ${region}</h3><h3>Typical ${region} Wine Profile</h3>Format the output in simple HTML using only <p> and <h3> tags.`;
+                break;
+            case 'wine':
+            case 'producer':
+            case 'vintage':
+            case 'place':
+                 title = `Critic's Profile: ${subjectName}`;
+                 prompt = `You are a world-renowned wine critic specializing exclusively in the wines of ${region}. Your task is to write a professional profile for the following iconic ${region} topic: ${subjectName}. Your analysis must adhere to a strict pyramid of importance: 1) The specific subject's style or character. 2) The character of its specific appellation within ${region}. 3) The general characteristics of ${region}. Do not mention wines from other regions unless making a direct, essential stylistic comparison. Synthesize information from authoritative sources like Vinous, The Wine Advocate, and JancisRobinson.com, but ensure the final note is your own expert synthesis. Format in simple HTML using only <p> and <h3> tags.`;
+                 break;
+            case 'dish':
+            case 'wine_pairing':
+                title = `Gastronomic Analysis: ${subjectName}`;
+                prompt = `You are a master sommelier and food theorist specializing in the cuisine and wine of ${region}. Your task is to explain the classic wine pairing for the dish: ${subjectName}. Your explanation must follow this strict pyramid of importance: 1. The specific characteristics of the dish as found in the region. 2. The typical profile of a ${region} wine that pairs with it. 3. The underlying gastronomic principles (complement, contrast, texture) that make the pairing successful within the context of ${region}'s culture. Synthesize information from expert sources, but frame your entire response within the context of ${region}. Format in simple HTML using only <p> and <h3> tags.`;
+                break;
+            case 'ingredient':
+                title = `Ingredient Profile: ${subjectName}`;
+                prompt = `You are a food and wine expert specializing in the cuisine of ${region}. Your task is to provide a detailed overview of the ingredient: ${subjectName}. Your response must follow this strict pyramid of importance: 1. How this ingredient is used in the local cuisine of ${region}. 2. Its typical flavor and aromatic profile. 3. How its profile might be reflected in or complement the local wines, but do not focus on specific pairings unless it is intrinsic to the ingredient itself. Synthesize from authoritative sources. Format in simple HTML using only <p> and <h3> tags.`;
+                break;
+            case 'spirit':
+            case 'liqueur':
+                title = `Beverage Profile: ${subjectName}`;
+                prompt = `You are an expert on the spirits and liqueurs of France, with a specialization in ${region}. Your task is to provide a detailed overview of ${subjectName}. Your response must follow this strict pyramid of importance: 1. How ${subjectName} is made and consumed specifically within ${region}. 2. Its key ingredients and typical flavor profile. 3. Its cultural significance in ${region}. Do not focus on wine pairings unless it is a key part of its consumption. Synthesize information from authoritative sources. Format in simple HTML using only <p> and <h3> tags.`;
+                break;
+        }
+
+        if (prompt) {
+            openAiModal(title);
+            callGemini(prompt);
+        }
+    };
+
+    const callGemini = async (prompt) => {
+        const apiKey = state.apiKey;
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+        const payload = {
+            contents: [{
+                role: "user",
+                parts: [{ text: prompt }]
+            }],
+            generationConfig: {
+                temperature: 0.5,
+                topK: 1,
+                topP: 1,
+                maxOutputTokens: 8192,
+            },
+        };
+
+        try {
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(`API Error: ${response.status} ${response.statusText} - ${errorData.error.message}`);
+            }
+
+            const result = await response.json();
+            
+            if (result.candidates && result.candidates.length > 0 &&
+                result.candidates[0].content && result.candidates[0].content.parts &&
+                result.candidates[0].content.parts.length > 0) {
+                const text = result.candidates[0].content.parts[0].text;
+                updateAiModalBody(text);
+            } else {
+                throw new Error("Unexpected API response structure or content is missing.");
+            }
+        } catch (error) {
+            console.error('Gemini API call failed:', error);
+            updateAiModalBody(`<p class="text-red-400">An error occurred while generating the response. Please check your API key and network connection. Error: ${error.message}</p>`);
+        }
+    };
+
+    // --- Initial Load --- //
+    showWelcomeModal();
+});
+</script>
+
+</body>
+</html>
